@@ -1,26 +1,73 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-deck-bg: #0d1117;
+  --color-deck-card: #161b22;
+  --color-deck-card-hover: #1c2230;
+  --color-deck-border: #30363d;
+  --color-deck-border-soft: #21262d;
+  --color-deck-text: #e6edf3;
+  --color-deck-text-muted: #8b949e;
+  --color-deck-text-dim: #6e7681;
+
+  --color-accent-blue: #58a6ff;
+  --color-accent-blue-soft: rgba(88, 166, 255, 0.12);
+  --color-accent-red: #f85149;
+  --color-accent-red-soft: rgba(248, 81, 73, 0.12);
+  --color-accent-green: #3fb950;
+  --color-accent-green-soft: rgba(63, 185, 80, 0.12);
+  --color-accent-purple: #bc8cff;
+  --color-accent-purple-soft: rgba(188, 140, 255, 0.12);
+  --color-accent-amber: #d29922;
+  --color-accent-amber-soft: rgba(210, 153, 34, 0.12);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-deck-bg);
+  color: var(--color-deck-text);
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* shiki output cleanup */
+pre.shiki {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+pre.shiki code {
+  font-family: inherit;
+}
+
+pre.shiki .line {
+  display: block;
+}
+
+/* Scrollbar (subtle) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
