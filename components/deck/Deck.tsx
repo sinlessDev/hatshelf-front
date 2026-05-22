@@ -8,6 +8,7 @@ import { TitleSlide } from "./slides/TitleSlide";
 import { DividerSlide } from "./slides/DividerSlide";
 import { ContentSlide } from "./slides/ContentSlide";
 import { AskButton } from "./AskButton";
+import { Button } from "@/components/ui/button";
 
 function parseHash(): number {
   if (typeof window === "undefined") return 0;
@@ -157,20 +158,26 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
               {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
             </span>
             <div className="flex items-center gap-1">
-              <NavButton
+              <Button
+                variant="outline"
+                size="icon"
                 disabled={index === 0}
                 onClick={() => go(index - 1)}
-                label="Previous slide"
+                aria-label="Previous slide"
+                className="font-mono"
               >
                 ←
-              </NavButton>
-              <NavButton
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
                 disabled={index === max}
                 onClick={() => go(index + 1)}
-                label="Next slide"
+                aria-label="Next slide"
+                className="font-mono"
               >
                 →
-              </NavButton>
+              </Button>
             </div>
           </div>
         </div>
@@ -179,26 +186,3 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
   );
 }
 
-function NavButton({
-  children,
-  onClick,
-  disabled,
-  label,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-      className="grid h-8 w-8 place-items-center rounded-md border border-[--color-deck-border] bg-[--color-deck-card] font-mono text-sm text-[--color-deck-text] transition hover:bg-[--color-deck-card-hover] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-[--color-deck-card]"
-    >
-      {children}
-    </button>
-  );
-}

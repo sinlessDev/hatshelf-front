@@ -104,7 +104,7 @@ export function AskButton() {
         <MessageCircleIcon data-icon="inline-start" />
         Ask a question
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <form onSubmit={onSubmit}>
           <DialogHeader>
             <DialogTitle>Ask a question</DialogTitle>
@@ -140,7 +140,7 @@ export function AskButton() {
                 disabled={submitting || sent}
                 autoFocus
                 aria-invalid={status === "error" || undefined}
-                className="min-h-32 resize-none"
+                className="min-h-32 resize-none overflow-hidden"
               />
               <FieldDescription className="flex justify-between">
                 <span>Be specific — short questions get faster answers.</span>
