@@ -1,0 +1,23 @@
+import { MonitorIcon } from "lucide-react";
+
+export function MobileGate() {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-(--color-deck-bg) px-8 text-center md:hidden">
+      <div className="grid size-14 place-items-center rounded-xl border border-(--color-deck-border) bg-(--color-deck-card)">
+        <MonitorIcon className="size-6 text-(--color-deck-text-muted)" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <h1 className="font-mono text-lg text-(--color-deck-text)">
+          Open on a desktop
+        </h1>
+        <p className="max-w-xs text-sm text-(--color-deck-text-muted)">
+          This lecture deck is built for a wider screen. Please open this link
+          on a laptop or desktop browser.
+        </p>
+      </div>
+      <span className="font-mono text-[0.7rem] tracking-widest text-(--color-deck-text-dim) uppercase">
+        ≥ 768px
+      </span>
+    </div>
+  );
+}

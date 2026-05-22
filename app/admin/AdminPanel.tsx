@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   InboxIcon,
   PauseIcon,
@@ -19,8 +19,11 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import type { Question } from "@/lib/questions";
+import { SlideNotes } from "./SlideNotes";
 
 const POLL_MS = 3000;
+
+const noopSubscribe = () => () => {};
 
 function timeAgo(ts: number) {
   const s = Math.floor((Date.now() - ts) / 1000);
@@ -36,14 +39,13 @@ function timeAgo(ts: number) {
 export function AdminPanel({ initial }: { initial: Question[] }) {
   const [questions, setQuestions] = useState<Question[]>(initial);
   const [paused, setPaused] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [, setTick] = useState(0);
-  const lastFetchRef = useRef<number>(0);
-
-  useEffect(() => {
-    setMounted(true);
-    lastFetchRef.current = Date.now();
-  }, []);
+  const [lastFetch, setLastFetch] = useState(() => Date.now());
+  const mounted = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
 
   const fetchOnce = useCallback(async () => {
     try {
@@ -51,7 +53,7 @@ export function AdminPanel({ initial }: { initial: Question[] }) {
       if (!res.ok) return;
       const data = (await res.json()) as { questions: Question[] };
       setQuestions(data.questions);
-      lastFetchRef.current = Date.now();
+      setLastFetch(Date.now());
     } catch {
       /* network blip — keep polling */
     }
@@ -85,20 +87,20 @@ export function AdminPanel({ initial }: { initial: Question[] }) {
 
   return (
     <div className="min-h-screen bg-background px-6 py-10">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <header className="flex items-end justify-between border-b pb-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Questions</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Presenter</h1>
             <p
               className="font-mono text-xs text-muted-foreground"
               suppressHydrationWarning
             >
-              {questions.length} total · polling every {POLL_MS / 1000}s ·{" "}
+              {questions.length} questions · polling every {POLL_MS / 1000}s ·{" "}
               {!mounted
                 ? "loading…"
                 : paused
                   ? "paused"
-                  : `updated ${timeAgo(lastFetchRef.current)}`}
+                  : `updated ${timeAgo(lastFetch)}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -130,53 +132,67 @@ export function AdminPanel({ initial }: { initial: Question[] }) {
           </div>
         </header>
 
-        {questions.length === 0 ? (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <InboxIcon />
-              </EmptyMedia>
-              <EmptyTitle>No questions yet</EmptyTitle>
-              <EmptyDescription>
-                Students appear here in real time as they submit.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {questions.map((q) => (
-              <li key={q.id}>
-                <Card className="group transition hover:bg-accent/30">
-                  <CardContent className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{q.name}</span>
-                        <span
-                          className="font-mono text-xs text-muted-foreground"
-                          suppressHydrationWarning
-                        >
-                          · {mounted ? timeAgo(q.ts) : ""}
-                        </span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => remove(q.id)}
-                        aria-label="Delete question"
-                        className="opacity-0 transition group-hover:opacity-100"
-                      >
-                        <XIcon />
-                      </Button>
-                    </div>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {q.text}
-                    </p>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section className="flex flex-col gap-3">
+            <h2 className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
+              Speaker notes
+            </h2>
+            <SlideNotes />
+          </section>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
+              Questions
+            </h2>
+            {questions.length === 0 ? (
+              <Empty className="border">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <InboxIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>No questions yet</EmptyTitle>
+                  <EmptyDescription>
+                    Students appear here in real time as they submit.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {questions.map((q) => (
+                  <li key={q.id}>
+                    <Card className="group transition hover:bg-accent/30">
+                      <CardContent className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{q.name}</span>
+                            <span
+                              className="font-mono text-xs text-muted-foreground"
+                              suppressHydrationWarning
+                            >
+                              · {mounted ? timeAgo(q.ts) : ""}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => remove(q.id)}
+                            aria-label="Delete question"
+                            className="opacity-0 transition group-hover:opacity-100"
+                          >
+                            <XIcon />
+                          </Button>
+                        </div>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {q.text}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );

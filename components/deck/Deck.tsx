@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { PreparedSlide } from "@/lib/slides/types";
 import { accentVar } from "@/lib/slides/accent";
@@ -11,7 +17,6 @@ import { AskButton } from "./AskButton";
 import { Button } from "@/components/ui/button";
 
 function parseHash(): number {
-  if (typeof window === "undefined") return 0;
   const raw = window.location.hash.replace("#", "");
   const n = parseInt(raw, 10);
   return Number.isFinite(n) ? n : 0;
@@ -27,49 +32,60 @@ function getAccent(slide: PreparedSlide) {
   return slide.accent;
 }
 
+function subscribeHash(cb: () => void) {
+  window.addEventListener("hashchange", cb);
+  return () => window.removeEventListener("hashchange", cb);
+}
+
 export function Deck({ slides }: { slides: PreparedSlide[] }) {
   const max = slides.length - 1;
-  const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState<1 | -1>(1);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  const index = useSyncExternalStore(
+    subscribeHash,
+    useCallback(() => clamp(parseHash() - 1, max), [max]),
+    () => 0,
+  );
+
+  // Derive direction from index changes (conditional setState during render is
+  // the supported pattern in React 19; refs are forbidden in render).
+  const [prevIndex, setPrevIndex] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
+  if (index !== prevIndex) {
+    setDirection(index > prevIndex ? 1 : -1);
+    setPrevIndex(index);
+  }
 
   const go = useCallback(
     (next: number) => {
       const target = clamp(next, max);
-      setDirection(target > index ? 1 : -1);
-      setIndex(target);
+      const hash = `#${target + 1}`;
+      if (window.location.hash === hash) return;
+      window.history.replaceState(null, "", hash);
+      window.dispatchEvent(new Event("hashchange"));
     },
-    [index, max],
+    [max],
   );
 
-  // Init from hash + listen
+  // Broadcast slide index to admin panel (other tabs, same origin)
   useEffect(() => {
-    const initial = clamp(parseHash() - 1, max);
-    if (initial > 0) setIndex(initial);
-    const onHash = () => {
-      const n = clamp(parseHash() - 1, max);
-      setIndex((curr) => {
-        if (n === curr) return curr;
-        setDirection(n > curr ? 1 : -1);
-        return n;
-      });
-    };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, [max]);
-
-  // Sync hash
-  useEffect(() => {
-    const next = `#${index + 1}`;
-    if (window.location.hash !== next) {
-      window.history.replaceState(null, "", next);
+    try {
+      localStorage.setItem("hatshelf:slide", String(index));
+    } catch {
+      /* ignore (private mode, etc.) */
     }
+    const ch = new BroadcastChannel("hatshelf-deck");
+    ch.postMessage({ type: "slide", index });
+    ch.close();
   }, [index]);
 
   // Keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
         return;
       if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)) {
         e.preventDefault();
@@ -117,14 +133,14 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <AnimatePresence mode="wait" custom={direction}>
+      <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={index}
           custom={direction}
-          initial={{ opacity: 0, x: direction * 40 }}
+          initial={{ opacity: 0, x: direction * 80 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: direction * -40 }}
-          transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+          exit={{ opacity: 0, x: direction * -80 }}
+          transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
           className="absolute inset-0"
         >
           {slide.kind === "title" ? (
@@ -155,7 +171,8 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
           </div>
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs tabular-nums text-[--color-deck-text-muted]">
-              {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+              {String(index + 1).padStart(2, "0")} /{" "}
+              {String(slides.length).padStart(2, "0")}
             </span>
             <div className="flex items-center gap-1">
               <Button
@@ -185,4 +202,3 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
     </div>
   );
 }
-
