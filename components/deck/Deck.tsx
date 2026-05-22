@@ -8,12 +8,14 @@ import {
   useSyncExternalStore,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import type { PreparedSlide } from "@/lib/slides/types";
 import { accentVar } from "@/lib/slides/accent";
 import { TitleSlide } from "./slides/TitleSlide";
 import { DividerSlide } from "./slides/DividerSlide";
 import { ContentSlide } from "./slides/ContentSlide";
 import { AskButton } from "./AskButton";
+import { LocaleSwitch } from "./LocaleSwitch";
 import { Button } from "@/components/ui/button";
 
 function parseHash(): number {
@@ -38,6 +40,7 @@ function subscribeHash(cb: () => void) {
 }
 
 export function Deck({ slides }: { slides: PreparedSlide[] }) {
+  const t = useTranslations("ui");
   const max = slides.length - 1;
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
@@ -153,7 +156,10 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
         </motion.div>
       </AnimatePresence>
 
-      <AskButton />
+      <div className="fixed top-4 right-4 z-30 flex items-center gap-2">
+        <LocaleSwitch />
+        <AskButton />
+      </div>
 
       {/* Bottom nav */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10">
@@ -167,7 +173,7 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
         </div>
         <div className="pointer-events-auto flex items-center justify-between px-6 py-3">
           <div className="font-mono text-xs text-[--color-deck-text-dim]">
-            Backend Security · Astana IT University
+            {t("deckFooter")}
           </div>
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs tabular-nums text-[--color-deck-text-muted]">
@@ -180,7 +186,7 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
                 size="icon"
                 disabled={index === 0}
                 onClick={() => go(index - 1)}
-                aria-label="Previous slide"
+                aria-label={t("prevSlide")}
                 className="font-mono"
               >
                 ←
@@ -190,7 +196,7 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
                 size="icon"
                 disabled={index === max}
                 onClick={() => go(index + 1)}
-                aria-label="Next slide"
+                aria-label={t("nextSlide")}
                 className="font-mono"
               >
                 →

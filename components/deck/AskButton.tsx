@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { MessageCircleIcon, SendIcon, CheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,7 @@ import { Spinner } from "@/components/ui/spinner";
 type Status = "idle" | "submitting" | "sent" | "error";
 
 export function AskButton() {
+  const t = useTranslations("ui.ask");
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [name, setName] = useState("");
@@ -39,8 +41,8 @@ export function AskButton() {
 
   useEffect(() => {
     if (!open) {
-      const t = setTimeout(reset, 200);
-      return () => clearTimeout(t);
+      const timer = setTimeout(reset, 200);
+      return () => clearTimeout(timer);
     }
   }, [open, reset]);
 
@@ -73,7 +75,7 @@ export function AskButton() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(typeof data.error === "string" ? data.error : "Submit failed.");
+        setError(typeof data.error === "string" ? data.error : t("submitFailed"));
         setStatus("error");
         return;
       }
@@ -81,7 +83,7 @@ export function AskButton() {
       setText("");
       setTimeout(() => setOpen(false), 1200);
     } catch {
-      setError("Network error.");
+      setError(t("networkError"));
       setStatus("error");
     }
   };
@@ -96,54 +98,55 @@ export function AskButton() {
           <Button
             variant="outline"
             size="sm"
-            className="fixed top-4 right-4 z-30 rounded-full shadow-lg"
-            aria-label="Ask a question"
+            className="rounded-full shadow-lg"
+            aria-label={t("button")}
           />
         }
       >
         <MessageCircleIcon data-icon="inline-start" />
-        Ask a question
+        {t("button")}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={onSubmit}>
           <DialogHeader>
-            <DialogTitle>Ask a question</DialogTitle>
-            <DialogDescription>
-              Your question goes to the lecturer in real time. Name is optional.
-            </DialogDescription>
+            <DialogTitle>{t("dialogTitle")}</DialogTitle>
+            <DialogDescription>{t("dialogDescription")}</DialogDescription>
           </DialogHeader>
 
           <FieldGroup className="mt-4 mb-4">
             <Field>
               <FieldLabel htmlFor="ask-name">
-                Name <span className="text-muted-foreground font-normal">(optional)</span>
+                {t("nameLabel")}{" "}
+                <span className="text-muted-foreground font-normal">
+                  {t("nameOptional")}
+                </span>
               </FieldLabel>
               <Input
                 id="ask-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={60}
-                placeholder="Anonymous"
+                placeholder={t("namePlaceholder")}
                 disabled={submitting || sent}
               />
             </Field>
 
             <Field data-invalid={status === "error" ? true : undefined}>
-              <FieldLabel htmlFor="ask-text">Question</FieldLabel>
+              <FieldLabel htmlFor="ask-text">{t("textLabel")}</FieldLabel>
               <Textarea
                 id="ask-text"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 maxLength={1000}
                 required
-                placeholder="What would you like to ask?"
+                placeholder={t("textPlaceholder")}
                 disabled={submitting || sent}
                 autoFocus
                 aria-invalid={status === "error" || undefined}
                 className="min-h-32 resize-none overflow-hidden"
               />
               <FieldDescription className="flex justify-between">
-                <span>Be specific — short questions get faster answers.</span>
+                <span>{t("textHelp")}</span>
                 <span className="tabular-nums">{text.length} / 1000</span>
               </FieldDescription>
               {error ? <FieldError>{error}</FieldError> : null}
@@ -157,7 +160,7 @@ export function AskButton() {
               onClick={() => setOpen(false)}
               disabled={submitting}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
@@ -170,7 +173,7 @@ export function AskButton() {
               ) : (
                 <SendIcon data-icon="inline-start" />
               )}
-              {submitting ? "Sending" : sent ? "Sent" : "Send"}
+              {submitting ? t("sending") : sent ? t("sent") : t("send")}
             </Button>
           </DialogFooter>
         </form>

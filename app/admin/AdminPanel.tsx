@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   InboxIcon,
   PauseIcon,
@@ -20,23 +21,30 @@ import {
 } from "@/components/ui/empty";
 import type { Question } from "@/lib/questions";
 import { SlideNotes } from "./SlideNotes";
+import { LocaleSwitch } from "@/components/deck/LocaleSwitch";
 
 const POLL_MS = 3000;
 
 const noopSubscribe = () => () => {};
 
-function timeAgo(ts: number) {
+type TFunction = ReturnType<typeof useTranslations<"ui.ago">>;
+
+function timeAgo(t: TFunction, ts: number, locale: string): string {
   const s = Math.floor((Date.now() - ts) / 1000);
-  if (s < 5) return "just now";
-  if (s < 60) return `${s}s ago`;
+  if (s < 5) return t("justNow");
+  if (s < 60) return t("seconds", { n: s });
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return t("minutes", { n: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return new Date(ts).toLocaleString();
+  if (h < 24) return t("hours", { n: h });
+  return new Intl.DateTimeFormat(locale).format(ts);
 }
 
 export function AdminPanel({ initial }: { initial: Question[] }) {
+  const tAdmin = useTranslations("ui.admin");
+  const tAgo = useTranslations("ui.ago");
+  const locale = useLocale();
+
   const [questions, setQuestions] = useState<Question[]>(initial);
   const [paused, setPaused] = useState(false);
   const [, setTick] = useState(0);
@@ -79,31 +87,40 @@ export function AdminPanel({ initial }: { initial: Question[] }) {
   };
 
   const clearAll = async () => {
-    if (!confirm(`Delete all ${questions.length} questions?`)) return;
+    const prompt = tAdmin("confirmClear", { count: questions.length });
+    if (!confirm(prompt)) return;
     setQuestions([]);
     await fetch("/api/admin/questions?id=all", { method: "DELETE" });
     fetchOnce();
   };
+
+  const state = !mounted
+    ? tAdmin("stateLoading")
+    : paused
+      ? tAdmin("statePaused")
+      : tAdmin("stateUpdated", { ago: timeAgo(tAgo, lastFetch, locale) });
 
   return (
     <div className="min-h-screen bg-background px-6 py-10">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <header className="flex items-end justify-between border-b pb-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Presenter</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {tAdmin("title")}
+            </h1>
             <p
               className="font-mono text-xs text-muted-foreground"
               suppressHydrationWarning
             >
-              {questions.length} questions · polling every {POLL_MS / 1000}s ·{" "}
-              {!mounted
-                ? "loading…"
-                : paused
-                  ? "paused"
-                  : `updated ${timeAgo(lastFetch)}`}
+              {tAdmin("statusLine", {
+                count: questions.length,
+                seconds: POLL_MS / 1000,
+                state,
+              })}
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <LocaleSwitch />
             <Button
               variant="outline"
               size="sm"
@@ -114,11 +131,11 @@ export function AdminPanel({ initial }: { initial: Question[] }) {
               ) : (
                 <PauseIcon data-icon="inline-start" />
               )}
-              {paused ? "Resume" : "Pause"}
+              {paused ? tAdmin("resume") : tAdmin("pause")}
             </Button>
             <Button variant="outline" size="sm" onClick={fetchOnce}>
               <RefreshCwIcon data-icon="inline-start" />
-              Refresh
+              {tAdmin("refresh")}
             </Button>
             <Button
               variant="destructive"
@@ -127,7 +144,7 @@ export function AdminPanel({ initial }: { initial: Question[] }) {
               disabled={questions.length === 0}
             >
               <Trash2Icon data-icon="inline-start" />
-              Clear all
+              {tAdmin("clearAll")}
             </Button>
           </div>
         </header>
@@ -135,14 +152,14 @@ export function AdminPanel({ initial }: { initial: Question[] }) {
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="flex flex-col gap-3">
             <h2 className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
-              Speaker notes
+              {tAdmin("speakerNotes")}
             </h2>
             <SlideNotes />
           </section>
 
           <section className="flex flex-col gap-3">
             <h2 className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
-              Questions
+              {tAdmin("questions")}
             </h2>
             {questions.length === 0 ? (
               <Empty className="border">
@@ -150,9 +167,9 @@ export function AdminPanel({ initial }: { initial: Question[] }) {
                   <EmptyMedia variant="icon">
                     <InboxIcon />
                   </EmptyMedia>
-                  <EmptyTitle>No questions yet</EmptyTitle>
+                  <EmptyTitle>{tAdmin("noQuestions")}</EmptyTitle>
                   <EmptyDescription>
-                    Students appear here in real time as they submit.
+                    {tAdmin("noQuestionsDesc")}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>
@@ -169,14 +186,14 @@ export function AdminPanel({ initial }: { initial: Question[] }) {
                               className="font-mono text-xs text-muted-foreground"
                               suppressHydrationWarning
                             >
-                              · {mounted ? timeAgo(q.ts) : ""}
+                              · {mounted ? timeAgo(tAgo, q.ts, locale) : ""}
                             </span>
                           </div>
                           <Button
                             variant="ghost"
                             size="icon-sm"
                             onClick={() => remove(q.id)}
-                            aria-label="Delete question"
+                            aria-label={tAdmin("deleteQuestion")}
                             className="opacity-0 transition group-hover:opacity-100"
                           >
                             <XIcon />

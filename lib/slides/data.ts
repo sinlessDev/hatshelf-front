@@ -1,13 +1,13 @@
-import type { Slide } from "./types";
+import type { LocSlide } from "./types";
 
-export const slides: Slide[] = [
+export const slides: LocSlide[] = [
   // ── 1. Title ──────────────────────────────────────────────────────────
   {
     kind: "title",
-    title: "Backend Security Engineering in Depth",
-    subtitle: "What goes wrong, why, and how to defend — in 60 minutes",
+    titleKey: "slide.title.title",
+    subtitleKey: "slide.title.subtitle",
     tags: ["auth", "injection", "secrets", "infra", "APIs"],
-    footer: "Astana IT University · 2026",
+    footerKey: "slide.title.footer",
   },
 
   // ── 2. Threat model ───────────────────────────────────────────────────
@@ -15,42 +15,31 @@ export const slides: Slide[] = [
     kind: "content",
     accent: "neutral",
     icon: "!",
-    title: "What we're defending against",
+    titleKey: "slide.threatModel.title",
     blocks: [
-      {
-        kind: "lead",
-        text: "Most breaches are not zero-days. They are checklists: forgotten flags, missing checks, leaked secrets. The cost is rising and detection is slow.",
-      },
+      { kind: "lead", textKey: "slide.threatModel.lead" },
       {
         kind: "cards",
         columns: 3,
         items: [
           {
-            title: "AVG BREACH COST",
+            titleKey: "slide.threatModel.cards.cost.title",
+            bodyKey: "slide.threatModel.cards.cost.body",
             accent: "red",
-            body: "$4.88M global average per incident (IBM, 2024). Larger for regulated industries.",
           },
           {
-            title: "MTTD + MTTR",
+            titleKey: "slide.threatModel.cards.mttd.title",
+            bodyKey: "slide.threatModel.cards.mttd.body",
             accent: "amber",
-            body: "277 days median to identify and contain a breach. You ship faster than you detect.",
           },
           {
-            title: "ROOT CAUSE",
+            titleKey: "slide.threatModel.cards.rootCause.title",
+            bodyKey: "slide.threatModel.cards.rootCause.body",
             accent: "blue",
-            body: "82% involve a human or config error: stolen creds, exposed buckets, missing patch.",
           },
         ],
       },
-      {
-        kind: "bullets",
-        items: [
-          "Recon: find endpoints, parameters, error messages, leaked tokens on GitHub.",
-          "Foothold: SQLi, weak auth, exposed admin panel, dependency CVE.",
-          "Pivot: SSRF to metadata service, IDOR to other tenants, JWT forgery.",
-          "Exfiltrate: dump DB, S3, logs — anything with PII or secrets.",
-        ],
-      },
+      { kind: "bullets", itemsKey: "slide.threatModel.bullets" },
     ],
   },
 
@@ -58,8 +47,8 @@ export const slides: Slide[] = [
   {
     kind: "divider",
     number: "01",
-    name: "Authentication & Authorization",
-    description: "Who are you, and what are you allowed to do?",
+    nameKey: "slide.section1.name",
+    descriptionKey: "slide.section1.description",
     accent: "blue",
   },
 
@@ -68,16 +57,13 @@ export const slides: Slide[] = [
     kind: "content",
     accent: "blue",
     icon: "#",
-    title: "Storing passwords",
+    titleKey: "slide.passwords.title",
     blocks: [
-      {
-        kind: "lead",
-        text: "Passwords are not encrypted. They are hashed with a slow, salted, memory-hard function. MD5, SHA-1, even plain SHA-256 are wrong.",
-      },
+      { kind: "lead", textKey: "slide.passwords.lead" },
       {
         kind: "code-compare",
         bad: {
-          label: "❌ VULNERABLE",
+          labelKey: "slide.passwords.badLabel",
           tone: "bad",
           lang: "python",
           code: `import hashlib
@@ -91,7 +77,7 @@ def verify(pw: str, stored: str) -> bool:
     return hash_password(pw) == stored`,
         },
         good: {
-          label: "✓ SECURE",
+          labelKey: "slide.passwords.goodLabel",
           tone: "good",
           lang: "python",
           code: `from argon2 import PasswordHasher
@@ -111,8 +97,8 @@ def verify(pw: str, stored: str) -> bool:
       },
       {
         kind: "tip",
-        title: "Pick one",
-        body: "Argon2id (winner of PHC, OWASP default), bcrypt (cost ≥ 12), or scrypt. Never roll your own. Re-hash on login if parameters change.",
+        titleKey: "slide.passwords.tipTitle",
+        bodyKey: "slide.passwords.tipBody",
       },
     ],
   },
@@ -122,26 +108,26 @@ def verify(pw: str, stored: str) -> bool:
     kind: "content",
     accent: "blue",
     icon: "{}",
-    title: "JWT: three common forgeries",
+    titleKey: "slide.jwt.title",
     blocks: [
       {
         kind: "cards",
         columns: 3,
         items: [
           {
-            title: "ALG: NONE",
+            titleKey: "slide.jwt.cards.algNone.title",
+            bodyKey: "slide.jwt.cards.algNone.body",
             accent: "red",
-            body: "Library accepts unsigned tokens. Attacker sets header alg to 'none', strips signature, rewrites payload.",
           },
           {
-            title: "ALG CONFUSION",
+            titleKey: "slide.jwt.cards.confusion.title",
+            bodyKey: "slide.jwt.cards.confusion.body",
             accent: "red",
-            body: "Switch RS256 → HS256. Server verifies with the public key as the HMAC secret. Public key is, well, public.",
           },
           {
-            title: "WEAK SECRET",
+            titleKey: "slide.jwt.cards.weakSecret.title",
+            bodyKey: "slide.jwt.cards.weakSecret.body",
             accent: "red",
-            body: "HS256 with 'secret', 'changeme', or 8 ASCII chars. hashcat cracks in seconds.",
           },
         ],
       },
@@ -149,7 +135,7 @@ def verify(pw: str, stored: str) -> bool:
         kind: "code-compare",
         demoId: "jwt",
         bad: {
-          label: "❌ VULNERABLE",
+          labelKey: "slide.jwt.badLabel",
           tone: "bad",
           lang: "js",
           code: `import jwt from "jsonwebtoken";
@@ -163,7 +149,7 @@ export function verify(token) {
 }`,
         },
         good: {
-          label: "✓ SECURE",
+          labelKey: "slide.jwt.goodLabel",
           tone: "good",
           lang: "js",
           code: `import jwt from "jsonwebtoken";
@@ -189,12 +175,12 @@ export function verify(token) {
     kind: "content",
     accent: "blue",
     icon: "S",
-    title: "Session cookies",
+    titleKey: "slide.sessions.title",
     blocks: [
       {
         kind: "code-compare",
         bad: {
-          label: "❌ VULNERABLE",
+          labelKey: "slide.sessions.badLabel",
           tone: "bad",
           lang: "js",
           code: `// XSS reads it. CSRF rides it.
@@ -206,7 +192,7 @@ res.cookie("sid", sessionId, {
 });`,
         },
         good: {
-          label: "✓ SECURE",
+          labelKey: "slide.sessions.goodLabel",
           tone: "good",
           lang: "js",
           code: `res.cookie("sid", sessionId, {
@@ -224,8 +210,8 @@ await req.session.regenerate();`,
       },
       {
         kind: "warning",
-        title: "Session fixation",
-        body: "If the session id does not change at the moment of login, an attacker who set it pre-login is now logged in too. Regenerate on every privilege change.",
+        titleKey: "slide.sessions.warningTitle",
+        bodyKey: "slide.sessions.warningBody",
       },
     ],
   },
@@ -235,17 +221,14 @@ await req.session.regenerate();`,
     kind: "content",
     accent: "blue",
     icon: "%",
-    title: "Authorization: ownership matters",
+    titleKey: "slide.authz.title",
     blocks: [
-      {
-        kind: "lead",
-        text: "Authentication tells you who. Authorization tells you whether they may. IDOR is the gap between the two — and the most common API bug.",
-      },
+      { kind: "lead", textKey: "slide.authz.lead" },
       {
         kind: "code-compare",
         demoId: "idor",
         bad: {
-          label: "❌ IDOR",
+          labelKey: "slide.authz.badLabel",
           tone: "bad",
           lang: "ts",
           code: `// GET /api/invoices/:id
@@ -257,7 +240,7 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
 });`,
         },
         good: {
-          label: "✓ OWNERSHIP CHECK",
+          labelKey: "slide.authz.goodLabel",
           tone: "good",
           lang: "ts",
           code: `app.get("/api/invoices/:id", auth, async (req, res) => {
@@ -273,8 +256,8 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
       },
       {
         kind: "tip",
-        title: "RBAC vs ABAC",
-        body: "RBAC: roles → permissions (admin can delete). ABAC: attributes → policy (user can delete if owner AND not archived AND within retention). Most real apps need both.",
+        titleKey: "slide.authz.tipTitle",
+        bodyKey: "slide.authz.tipBody",
       },
     ],
   },
@@ -283,8 +266,8 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
   {
     kind: "divider",
     number: "02",
-    name: "Injection Attacks",
-    description: "Untrusted input crossing a parser boundary.",
+    nameKey: "slide.section2.name",
+    descriptionKey: "slide.section2.description",
     accent: "red",
   },
 
@@ -293,17 +276,14 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
     kind: "content",
     accent: "red",
     icon: ">_",
-    title: "SQL injection — still #1",
+    titleKey: "slide.sqli.title",
     blocks: [
-      {
-        kind: "lead",
-        text: "Any user input concatenated into a query is a vulnerability. Union-based reads data. Blind/time-based extracts it byte by byte.",
-      },
+      { kind: "lead", textKey: "slide.sqli.lead" },
       {
         kind: "code-compare",
         demoId: "sqli",
         bad: {
-          label: "❌ VULNERABLE",
+          labelKey: "slide.sqli.badLabel",
           tone: "bad",
           lang: "python",
           code: `def login(email, password):
@@ -316,7 +296,7 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
     return db.execute(q).fetchone()`,
         },
         good: {
-          label: "✓ PARAMETERIZED",
+          labelKey: "slide.sqli.goodLabel",
           tone: "good",
           lang: "python",
           code: `def login(email, password):
@@ -333,8 +313,8 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
       },
       {
         kind: "warning",
-        title: "ORMs are not a free pass",
-        body: "Raw query escape hatches (.raw(), $queryRaw, Sequelize.literal) take strings. Same risk. And don't trust 'escaping' libraries — use bind parameters.",
+        titleKey: "slide.sqli.warningTitle",
+        bodyKey: "slide.sqli.warningBody",
       },
     ],
   },
@@ -344,12 +324,12 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
     kind: "content",
     accent: "red",
     icon: "$",
-    title: "NoSQL & command injection",
+    titleKey: "slide.nosqlCmd.title",
     blocks: [
       {
         kind: "code-compare",
         bad: {
-          label: "❌ NoSQL OPERATOR INJECTION",
+          labelKey: "slide.nosqlCmd.nosqlBadLabel",
           tone: "bad",
           lang: "js",
           code: `// Body: { "email": "a@b.c", "password": { "$gt": "" } }
@@ -363,7 +343,7 @@ app.post("/login", async (req, res) => {
 });`,
         },
         good: {
-          label: "✓ COERCE + HASH",
+          labelKey: "slide.nosqlCmd.nosqlGoodLabel",
           tone: "good",
           lang: "js",
           code: `app.post("/login", async (req, res) => {
@@ -380,7 +360,7 @@ app.post("/login", async (req, res) => {
       {
         kind: "code-compare",
         bad: {
-          label: "❌ SHELL=TRUE",
+          labelKey: "slide.nosqlCmd.shellBadLabel",
           tone: "bad",
           lang: "python",
           code: `# filename = "a.png; rm -rf /"
@@ -390,7 +370,7 @@ subprocess.run(
 )`,
         },
         good: {
-          label: "✓ NO SHELL",
+          labelKey: "slide.nosqlCmd.shellGoodLabel",
           tone: "good",
           lang: "python",
           code: `# argv list → no shell parsing.
@@ -409,12 +389,12 @@ subprocess.run(
     kind: "content",
     accent: "red",
     icon: "/",
-    title: "Path traversal & SSRF",
+    titleKey: "slide.pathSsrf.title",
     blocks: [
       {
         kind: "code-compare",
         bad: {
-          label: "❌ PATH TRAVERSAL",
+          labelKey: "slide.pathSsrf.badLabel",
           tone: "bad",
           lang: "js",
           code: `// GET /files?name=../../../etc/passwd
@@ -424,7 +404,7 @@ app.get("/files", (req, res) => {
 });`,
         },
         good: {
-          label: "✓ CONTAIN + VERIFY",
+          labelKey: "slide.pathSsrf.goodLabel",
           tone: "good",
           lang: "js",
           code: `const BASE = path.resolve("/var/app/uploads");
@@ -440,8 +420,8 @@ app.get("/files", (req, res) => {
       },
       {
         kind: "warning",
-        title: "SSRF: don't fetch what the user gave you",
-        body: "Block 127.0.0.0/8, 10/8, 172.16/12, 192.168/16, 169.254/16 (cloud metadata), ::1. Resolve DNS yourself and check the IP — not the hostname. DNS rebinding is real.",
+        titleKey: "slide.pathSsrf.warningTitle",
+        bodyKey: "slide.pathSsrf.warningBody",
       },
     ],
   },
@@ -450,8 +430,8 @@ app.get("/files", (req, res) => {
   {
     kind: "divider",
     number: "03",
-    name: "Data Protection & Secrets",
-    description: "What you store, where the keys live.",
+    nameKey: "slide.section3.name",
+    descriptionKey: "slide.section3.description",
     accent: "green",
   },
 
@@ -460,33 +440,33 @@ app.get("/files", (req, res) => {
     kind: "content",
     accent: "green",
     icon: "K",
-    title: "Where secrets live",
+    titleKey: "slide.secrets.title",
     blocks: [
       {
         kind: "cards",
         columns: 3,
         items: [
           {
-            title: "❌ HARDCODED",
+            titleKey: "slide.secrets.cards.hardcoded.title",
+            bodyKey: "slide.secrets.cards.hardcoded.body",
             accent: "red",
-            body: "Pasted in source. Lives forever in git history. Indexed by GitHub search and bots within minutes of pushing.",
           },
           {
-            title: "△ .ENV FILE",
+            titleKey: "slide.secrets.cards.env.title",
+            bodyKey: "slide.secrets.cards.env.body",
             accent: "amber",
-            body: "Out of source — good. But still plaintext, copied to every dev laptop, often committed by accident.",
           },
           {
-            title: "✓ VAULT / KMS",
+            titleKey: "slide.secrets.cards.vault.title",
+            bodyKey: "slide.secrets.cards.vault.body",
             accent: "green",
-            body: "Short-lived, rotated, audited. Apps fetch at boot. Access is per-identity, not per-file.",
           },
         ],
       },
       {
         kind: "code-compare",
         bad: {
-          label: "❌ COMMITTED",
+          labelKey: "slide.secrets.badLabel",
           tone: "bad",
           lang: "python",
           code: `STRIPE_KEY = "sk_live_51HabcXYZ..."   # in main.py
@@ -495,7 +475,7 @@ DB_URL     = "postgres://app:hunter2@prod-db/app"
 # Pushed once → key compromised forever.`,
         },
         good: {
-          label: "✓ FETCHED + ROTATED",
+          labelKey: "slide.secrets.goodLabel",
           tone: "good",
           lang: "python",
           code: `import os, boto3
@@ -516,12 +496,12 @@ STRIPE_KEY = load_secret(f"{os.environ['ENV']}/stripe/key")
     kind: "content",
     accent: "green",
     icon: "E",
-    title: "Encryption at rest & in transit",
+    titleKey: "slide.encryption.title",
     blocks: [
       {
         kind: "code-compare",
         bad: {
-          label: "❌ PLAINTEXT FIELD",
+          labelKey: "slide.encryption.badLabel",
           tone: "bad",
           lang: "python",
           code: `# SSN stored as plain text.
@@ -530,7 +510,7 @@ user.ssn = "123-45-6789"
 session.commit()`,
         },
         good: {
-          label: "✓ FIELD ENCRYPTION",
+          labelKey: "slide.encryption.goodLabel",
           tone: "good",
           lang: "python",
           code: `from cryptography.fernet import Fernet
@@ -547,7 +527,7 @@ def get_ssn(user) -> str:
       {
         kind: "code",
         block: {
-          label: "TLS — nginx",
+          labelKey: "slide.encryption.tlsLabel",
           tone: "neutral",
           lang: "nginx",
           code: `server {
@@ -568,8 +548,8 @@ def get_ssn(user) -> str:
   {
     kind: "divider",
     number: "04",
-    name: "Infrastructure & API Security",
-    description: "Rate limits, headers, and the supply chain.",
+    nameKey: "slide.section4.name",
+    descriptionKey: "slide.section4.description",
     accent: "purple",
   },
 
@@ -578,12 +558,12 @@ def get_ssn(user) -> str:
     kind: "content",
     accent: "purple",
     icon: "~",
-    title: "Rate limits & timing attacks",
+    titleKey: "slide.rateLimits.title",
     blocks: [
       {
         kind: "code",
         block: {
-          label: "express-rate-limit",
+          labelKey: "slide.rateLimits.rateLabel",
           tone: "good",
           lang: "js",
           code: `import rateLimit from "express-rate-limit";
@@ -603,7 +583,7 @@ app.use("/api/login", rateLimit({
         kind: "code-compare",
         demoId: "timing",
         bad: {
-          label: "❌ TIMING LEAK",
+          labelKey: "slide.rateLimits.timingBadLabel",
           tone: "bad",
           lang: "js",
           code: `// '==' returns early at first mismatch.
@@ -613,7 +593,7 @@ if (req.headers["x-api-token"] === expected) {
 }`,
         },
         good: {
-          label: "✓ CONSTANT-TIME",
+          labelKey: "slide.rateLimits.timingGoodLabel",
           tone: "good",
           lang: "js",
           code: `import { timingSafeEqual } from "node:crypto";
@@ -633,12 +613,12 @@ return next();`,
     kind: "content",
     accent: "purple",
     icon: "H",
-    title: "CORS & security headers",
+    titleKey: "slide.cors.title",
     blocks: [
       {
         kind: "code-compare",
         bad: {
-          label: "❌ WILDCARD WITH CREDENTIALS",
+          labelKey: "slide.cors.badLabel",
           tone: "bad",
           lang: "js",
           code: `// Browser blocks this combo, but the intent is wrong:
@@ -651,7 +631,7 @@ app.use(cors({
 app.use(cors({ origin: (o, cb) => cb(null, o) }));`,
         },
         good: {
-          label: "✓ ALLOWLIST + HEADERS",
+          labelKey: "slide.cors.goodLabel",
           tone: "good",
           lang: "js",
           code: `import helmet from "helmet";
@@ -667,8 +647,8 @@ app.use(cors({
       },
       {
         kind: "tip",
-        title: "Required headers",
-        body: "Strict-Transport-Security, Content-Security-Policy, X-Content-Type-Options: nosniff, Referrer-Policy: no-referrer, Permissions-Policy. helmet sets sane defaults — then tighten CSP.",
+        titleKey: "slide.cors.tipTitle",
+        bodyKey: "slide.cors.tipBody",
       },
     ],
   },
@@ -678,16 +658,13 @@ app.use(cors({
     kind: "content",
     accent: "purple",
     icon: "P",
-    title: "Your supply chain is in your lockfile",
+    titleKey: "slide.supplyChain.title",
     blocks: [
-      {
-        kind: "lead",
-        text: "Your code is small. Your dependencies are not. Most production CVEs in 2024 sat in transitive deps no one read.",
-      },
+      { kind: "lead", textKey: "slide.supplyChain.lead" },
       {
         kind: "code",
         block: {
-          label: "Audit in CI — GitHub Actions",
+          labelKey: "slide.supplyChain.auditLabel",
           tone: "good",
           lang: "yaml",
           code: `name: security
@@ -709,24 +686,14 @@ jobs:
         columns: 2,
         items: [
           {
-            title: "ECOSYSTEM TOOLS",
+            titleKey: "slide.supplyChain.cards.tools.title",
+            bulletsKey: "slide.supplyChain.cards.tools.bullets",
             accent: "purple",
-            bullets: [
-              "pnpm audit / npm audit / yarn audit",
-              "pip-audit, safety",
-              "cargo audit, govulncheck",
-              "Dependabot, Renovate — automate PRs",
-            ],
           },
           {
-            title: "POLICY",
+            titleKey: "slide.supplyChain.cards.policy.title",
+            bulletsKey: "slide.supplyChain.cards.policy.bullets",
             accent: "purple",
-            bullets: [
-              "Pin versions; commit the lockfile.",
-              "Fail builds on high/critical.",
-              "Review new direct deps like new employees.",
-              "Mirror critical deps; have a fork plan.",
-            ],
           },
         ],
       },
@@ -737,8 +704,8 @@ jobs:
   {
     kind: "divider",
     number: "05",
-    name: "Advanced Topics",
-    description: "The ones that take down billion-dollar companies.",
+    nameKey: "slide.section5.name",
+    descriptionKey: "slide.section5.description",
     accent: "amber",
   },
 
@@ -747,17 +714,14 @@ jobs:
     kind: "content",
     accent: "amber",
     icon: "M",
-    title: "Mass assignment",
+    titleKey: "slide.massAssignment.title",
     blocks: [
-      {
-        kind: "lead",
-        text: "GitHub, 2012: Egor Homakov added himself as a Rails contributor by posting an extra parameter. The framework auto-bound every field on the model.",
-      },
+      { kind: "lead", textKey: "slide.massAssignment.lead" },
       {
         kind: "code-compare",
         demoId: "mass-assignment",
         bad: {
-          label: "❌ AUTO-BIND EVERYTHING",
+          labelKey: "slide.massAssignment.badLabel",
           tone: "bad",
           lang: "ts",
           code: `// PATCH /users/me   body: { name: "...", isAdmin: true }
@@ -767,7 +731,7 @@ app.patch("/users/me", auth, async (req, res) => {
 });`,
         },
         good: {
-          label: "✓ ALLOWLIST",
+          labelKey: "slide.massAssignment.goodLabel",
           tone: "good",
           lang: "ts",
           code: `import { z } from "zod";
@@ -792,16 +756,13 @@ app.patch("/users/me", auth, async (req, res) => {
     kind: "content",
     accent: "amber",
     icon: "D",
-    title: "Insecure deserialization",
+    titleKey: "slide.deserialization.title",
     blocks: [
-      {
-        kind: "lead",
-        text: "Any format that can rebuild arbitrary objects (pickle, Java serialization, PHP unserialize, YAML safe_load=False) is a remote code execution primitive when fed attacker input.",
-      },
+      { kind: "lead", textKey: "slide.deserialization.lead" },
       {
         kind: "code-compare",
         bad: {
-          label: "❌ pickle.loads(user_input)",
+          labelKey: "slide.deserialization.badLabel",
           tone: "bad",
           lang: "python",
           code: `# Session cookie payload, deserialized server-side.
@@ -811,7 +772,7 @@ data = pickle.loads(base64.b64decode(cookie))
 # Instant RCE.`,
         },
         good: {
-          label: "✓ JSON + HMAC",
+          labelKey: "slide.deserialization.goodLabel",
           tone: "good",
           lang: "python",
           code: `import json, hmac, hashlib, base64
@@ -837,38 +798,28 @@ def verify(token: str) -> dict:
     kind: "content",
     accent: "amber",
     icon: "L",
-    title: "Observability without leaks",
+    titleKey: "slide.logging.title",
     blocks: [
       {
         kind: "cards",
         columns: 2,
         items: [
           {
-            title: "✓ DO LOG",
+            titleKey: "slide.logging.cards.doLog.title",
+            bulletsKey: "slide.logging.cards.doLog.bullets",
             accent: "green",
-            bullets: [
-              "Request id, user id, route, status, latency",
-              "Auth events: login, logout, failure, lockout",
-              "Authz denials with subject + resource",
-              "Admin actions and config changes",
-            ],
           },
           {
-            title: "❌ NEVER LOG",
+            titleKey: "slide.logging.cards.neverLog.title",
+            bulletsKey: "slide.logging.cards.neverLog.bullets",
             accent: "red",
-            bullets: [
-              "Passwords, tokens, session ids, API keys",
-              "Full credit cards, CVVs, raw SSNs",
-              "Request/response bodies for sensitive routes",
-              "Stack traces in production responses",
-            ],
           },
         ],
       },
       {
         kind: "code-compare",
         bad: {
-          label: "❌ STACK TO CLIENT",
+          labelKey: "slide.logging.badLabel",
           tone: "bad",
           lang: "js",
           code: `app.use((err, req, res, next) => {
@@ -877,7 +828,7 @@ def verify(token: str) -> dict:
 });`,
         },
         good: {
-          label: "✓ SAFE HANDLER",
+          labelKey: "slide.logging.goodLabel",
           tone: "good",
           lang: "js",
           code: `app.use((err, req, res, next) => {
@@ -899,43 +850,32 @@ def verify(token: str) -> dict:
     kind: "content",
     accent: "neutral",
     icon: "✓",
-    title: "10 non-negotiables",
+    titleKey: "slide.close.title",
     blocks: [
-      {
-        kind: "bullets",
-        items: [
-          "Hash passwords with Argon2id / bcrypt(≥12). Never reversible.",
-          "Pin JWT algs. Rotate signing keys. Short expiry + refresh.",
-          "HttpOnly, Secure, SameSite=Lax cookies. Regenerate session on login.",
-          "Authorize on every request. Check ownership server-side. Default-deny.",
-          "Parameterize every query. Treat user input as data, never as code.",
-          "Secrets in a vault. Never in git. Rotate. Audit access.",
-          "TLS 1.2+ everywhere. HSTS preload. Encrypt sensitive fields.",
-          "Rate-limit auth & write endpoints. Use constant-time compares.",
-          "Allowlist CORS origins. helmet for headers. Strict CSP.",
-          "Audit dependencies in CI. Fail builds on high/critical CVEs.",
-        ],
-      },
+      { kind: "bullets", itemsKey: "slide.close.bullets" },
       {
         kind: "tip",
-        title: "Keep reading",
+        titleKey: "slide.close.tipTitle",
         links: [
-          { label: "OWASP Top 10", url: "https://owasp.org/Top10/" },
+          { labelKey: "_link.owaspTop10", url: "https://owasp.org/Top10/" },
           {
-            label: "OWASP ASVS",
+            labelKey: "_link.owaspAsvs",
             url: "https://owasp.org/www-project-application-security-verification-standard/",
           },
-          { label: "OWASP Cheat Sheets", url: "https://cheatsheetseries.owasp.org/" },
           {
-            label: "PortSwigger Web Security Academy",
+            labelKey: "_link.owaspCheatSheets",
+            url: "https://cheatsheetseries.owasp.org/",
+          },
+          {
+            labelKey: "_link.portSwigger",
             url: "https://portswigger.net/web-security",
           },
           {
-            label: "Google Project Zero",
+            labelKey: "_link.projectZero",
             url: "https://googleprojectzero.blogspot.com/",
           },
           {
-            label: "GitHub Advisory Database",
+            labelKey: "_link.githubAdvisories",
             url: "https://github.com/advisories",
           },
         ],

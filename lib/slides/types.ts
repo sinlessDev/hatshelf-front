@@ -12,6 +12,11 @@ export type Lang =
   | "json"
   | "http";
 
+// ─────────────────────────────────────────────────────────────────────
+// Resolved (rendered) shapes — locale-free, single language strings.
+// All renderer components consume these.
+// ─────────────────────────────────────────────────────────────────────
+
 export type CodeBlock = {
   label: string;
   tone: "bad" | "good" | "neutral";
@@ -90,3 +95,93 @@ export type PreparedContentSlide = Omit<ContentSlide, "blocks"> & {
 };
 
 export type PreparedSlide = TitleSlide | DividerSlide | PreparedContentSlide;
+
+// ─────────────────────────────────────────────────────────────────────
+// Authored (source) shapes — every translatable string is a key into
+// the next-intl message catalog (e.g., "slide.passwords.title").
+// `data.ts` / `notes.ts` use these; `resolve.ts` folds them into the
+// resolved shapes above using the locale-bound `t` function.
+// ─────────────────────────────────────────────────────────────────────
+
+/** A dotted key path into messages/{locale}.json. */
+export type MsgKey = string;
+
+export type LocCodeBlock = {
+  labelKey: MsgKey;
+  tone: "bad" | "good" | "neutral";
+  lang: Lang;
+  code: string;
+  captionKey?: MsgKey;
+};
+
+export type LocBlock =
+  | { kind: "code-compare"; bad: LocCodeBlock; good: LocCodeBlock; demoId?: string }
+  | { kind: "code"; block: LocCodeBlock; demoId?: string }
+  | {
+      kind: "card";
+      accent?: Accent;
+      titleKey: MsgKey;
+      bodyKey?: MsgKey;
+      bulletsKey?: MsgKey;
+    }
+  | {
+      kind: "cards";
+      columns?: 2 | 3 | 4;
+      items: {
+        titleKey: MsgKey;
+        accent?: Accent;
+        bodyKey?: MsgKey;
+        bulletsKey?: MsgKey;
+      }[];
+    }
+  | { kind: "warning"; titleKey: MsgKey; bodyKey: MsgKey }
+  | {
+      kind: "tip";
+      titleKey: MsgKey;
+      bodyKey?: MsgKey;
+      links?: { labelKey: MsgKey; url: string }[];
+    }
+  | { kind: "bullets"; itemsKey: MsgKey }
+  | { kind: "lead"; textKey: MsgKey };
+
+export type LocTitleSlide = {
+  kind: "title";
+  titleKey: MsgKey;
+  subtitleKey?: MsgKey;
+  tags?: string[];
+  footerKey?: MsgKey;
+};
+
+export type LocDividerSlide = {
+  kind: "divider";
+  number: string;
+  nameKey: MsgKey;
+  descriptionKey?: MsgKey;
+  accent: Accent;
+};
+
+export type LocContentSlide = {
+  kind: "content";
+  accent: Accent;
+  icon?: string;
+  titleKey: MsgKey;
+  blocks: LocBlock[];
+};
+
+export type LocSlide = LocTitleSlide | LocDividerSlide | LocContentSlide;
+
+export type LocSlideNote = {
+  summaryKey: MsgKey;
+  talkingPointsKey: MsgKey;
+  detailsKey?: MsgKey;
+  watchForKey?: MsgKey;
+  transitionKey?: MsgKey;
+};
+
+export type SlideNote = {
+  summary: string;
+  talkingPoints: string[];
+  details?: string;
+  watchFor?: string[];
+  transition?: string;
+};

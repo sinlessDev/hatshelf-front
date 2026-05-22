@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { useTranslations } from "next-intl";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -12,13 +13,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { slides } from "@/lib/slides/data";
 import { slideNotes } from "@/lib/slides/notes";
+import { resolveNotes, resolveSlides } from "@/lib/slides/resolve";
 import type { Slide } from "@/lib/slides/types";
 
-function slideHeading(slide: Slide): { title: string; kind: string } {
-  if (slide.kind === "title") return { title: slide.title, kind: "TITLE" };
+function slideHeading(
+  slide: Slide,
+  t: ReturnType<typeof useTranslations<"ui.notes">>,
+): { title: string; kind: string } {
+  if (slide.kind === "title") return { title: slide.title, kind: t("titleKind") };
   if (slide.kind === "divider")
-    return { title: `${slide.number} · ${slide.name}`, kind: "DIVIDER" };
-  return { title: slide.title, kind: "CONTENT" };
+    return { title: `${slide.number} · ${slide.name}`, kind: t("dividerKind") };
+  return { title: slide.title, kind: t("contentKind") };
 }
 
 function clamp(n: number, max: number) {
@@ -59,7 +64,13 @@ function readDeckIndex(): number | null {
 }
 
 export function SlideNotes() {
-  const max = slides.length - 1;
+  const t = useTranslations("ui.notes");
+  const tRoot = useTranslations();
+
+  const resolvedSlides = useMemo(() => resolveSlides(slides, tRoot), [tRoot]);
+  const resolvedNotes = useMemo(() => resolveNotes(slideNotes, tRoot), [tRoot]);
+
+  const max = resolvedSlides.length - 1;
   const rawDeckIndex = useSyncExternalStore(
     subscribeDeck,
     readDeckIndex,
@@ -74,9 +85,9 @@ export function SlideNotes() {
   const goTo = (next: number) => setBrowsed(clamp(next, max));
   const resync = () => setBrowsed(null);
 
-  const slide = slides[viewIndex];
-  const { title, kind } = slideHeading(slide);
-  const note = slideNotes[viewIndex];
+  const slide = resolvedSlides[viewIndex];
+  const { title, kind } = slideHeading(slide, t);
+  const note = resolvedNotes[viewIndex];
   const isAhead = deckIndex !== null && viewIndex !== deckIndex;
 
   return (
@@ -87,28 +98,28 @@ export function SlideNotes() {
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-muted-foreground tabular-nums">
                 {String(viewIndex + 1).padStart(2, "0")} /{" "}
-                {String(slides.length).padStart(2, "0")}
+                {String(resolvedSlides.length).padStart(2, "0")}
               </span>
               <Badge variant="outline" className="font-mono text-[10px]">
                 {kind}
               </Badge>
               {deckIndex === null ? (
                 <Badge variant="secondary" className="font-mono text-[10px]">
-                  Deck offline
+                  {t("deckOffline")}
                 </Badge>
               ) : isAhead ? (
                 <Badge
                   variant="secondary"
                   className="font-mono text-[10px] text-amber-500"
                 >
-                  Browsing
+                  {t("browsing")}
                 </Badge>
               ) : (
                 <Badge
                   variant="secondary"
                   className="font-mono text-[10px] text-green-500"
                 >
-                  Following deck
+                  {t("following")}
                 </Badge>
               )}
             </div>
@@ -120,7 +131,7 @@ export function SlideNotes() {
               size="icon-sm"
               onClick={() => goTo(viewIndex - 1)}
               disabled={viewIndex === 0}
-              aria-label="Previous slide"
+              aria-label={t("jumpBack")}
             >
               <ChevronLeftIcon />
             </Button>
@@ -129,7 +140,7 @@ export function SlideNotes() {
               size="icon-sm"
               onClick={() => goTo(viewIndex + 1)}
               disabled={viewIndex === max}
-              aria-label="Next slide"
+              aria-label={t("jumpBack")}
             >
               <ChevronRightIcon />
             </Button>
@@ -138,8 +149,8 @@ export function SlideNotes() {
               size="icon-sm"
               onClick={resync}
               disabled={!isAhead || deckIndex === null}
-              aria-label="Jump back to deck"
-              title="Jump back to deck"
+              aria-label={t("jumpBack")}
+              title={t("jumpBack")}
             >
               <LocateFixedIcon />
             </Button>
@@ -152,7 +163,7 @@ export function SlideNotes() {
           <div className="flex flex-col gap-4 text-sm leading-relaxed">
             <p className="text-foreground">{note.summary}</p>
 
-            <NotesSection title="Talking points">
+            <NotesSection title={t("talkingPoints")}>
               <ul className="flex list-disc flex-col gap-1.5 pl-5 text-muted-foreground">
                 {note.talkingPoints.map((p, i) => (
                   <li key={i}>{p}</li>
@@ -161,7 +172,7 @@ export function SlideNotes() {
             </NotesSection>
 
             {note.details ? (
-              <NotesSection title="Details">
+              <NotesSection title={t("details")}>
                 <p className="whitespace-pre-wrap text-muted-foreground">
                   {note.details}
                 </p>
@@ -169,7 +180,7 @@ export function SlideNotes() {
             ) : null}
 
             {note.watchFor && note.watchFor.length > 0 ? (
-              <NotesSection title="Watch for">
+              <NotesSection title={t("watchFor")}>
                 <ul className="flex list-disc flex-col gap-1.5 pl-5 text-muted-foreground">
                   {note.watchFor.map((p, i) => (
                     <li key={i}>{p}</li>
@@ -179,7 +190,7 @@ export function SlideNotes() {
             ) : null}
 
             {note.transition ? (
-              <NotesSection title="Transition">
+              <NotesSection title={t("transition")}>
                 <p className="text-muted-foreground italic">
                   → {note.transition}
                 </p>
@@ -187,9 +198,7 @@ export function SlideNotes() {
             ) : null}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground italic">
-            No notes for this slide.
-          </p>
+          <p className="text-sm text-muted-foreground italic">{t("none")}</p>
         )}
       </CardContent>
     </Card>

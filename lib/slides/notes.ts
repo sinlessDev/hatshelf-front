@@ -1,420 +1,200 @@
 /**
  * Speaker notes keyed by slide index (0-based, matches the order in `slides`
- * from `data.ts`). Edit freely — these only render in the admin panel.
+ * from `data.ts`). All translatable text lives in messages/{locale}.json
+ * under the `notes.*` namespace; this file only carries the key references.
+ * Resolved to plain strings via `resolveNotes()` in `lib/slides/resolve.ts`.
  */
 
-export type SlideNote = {
-  /** One-sentence takeaway the audience should leave with. */
-  summary: string;
-  /** Talking points to hit, in order. */
-  talkingPoints: string[];
-  /** Optional war stories, depth, or context to bring up if there's time. */
-  details?: string;
-  /** Common gotchas, student questions, or things easy to mis-say. */
-  watchFor?: string[];
-  /** One-line segue into the next slide. */
-  transition?: string;
-};
+import type { LocSlideNote } from "./types";
 
-export const slideNotes: SlideNote[] = [
+export type { SlideNote } from "./types";
+
+export const slideNotes: LocSlideNote[] = [
   // 1. Title
   {
-    summary: "Set expectations: 60 minutes, breadth over depth, code-first.",
-    talkingPoints: [
-      "Welcome — this is one lecture; we won't cover everything, but we'll cover the things that actually break production.",
-      "Format: every section is a vulnerability + the one-line fix. Side-by-side bad/good code.",
-      "Audience check: who's shipping a backend right now? Who's run pentests?",
-      "Ask questions any time — there's an 'Ask a question' button on the deck.",
-    ],
-    transition: "We start with what we're actually defending against.",
+    summaryKey: "notes.title.summary",
+    talkingPointsKey: "notes.title.talkingPoints",
+    transitionKey: "notes.title.transition",
   },
 
   // 2. Threat model
   {
-    summary:
-      "Most breaches are not exotic. They are checklists missed under deadline pressure.",
-    talkingPoints: [
-      "Average breach: $4.88M (IBM 2024). Regulated industries 2–3× higher.",
-      "277 days median time to detect + contain. You ship features faster than you detect compromise.",
-      "82% involve human or config error — not zero-days. That means most of the work is hygiene.",
-      "Walk through the attacker kill chain: recon → foothold → pivot → exfiltrate.",
-    ],
-    details:
-      "The IBM Cost of a Data Breach report is the standard reference here. Healthcare averages ~$10M. The 277-day number is critical — it means an attacker has more than 9 months in your systems before anyone notices. Pivoting examples: SSRF → cloud metadata (Capital One 2019, 100M records), IDOR → cross-tenant (Optus 2022, ~10M records).",
-    watchFor: [
-      "Students may ask about zero-days — emphasize they exist but are vanishingly rare as the root cause vs. config mistakes.",
-      "Don't dwell on cost numbers; the point is detection latency.",
-    ],
-    transition:
-      "We'll work through the kill chain in order, starting with authentication.",
+    summaryKey: "notes.threatModel.summary",
+    talkingPointsKey: "notes.threatModel.talkingPoints",
+    detailsKey: "notes.threatModel.details",
+    watchForKey: "notes.threatModel.watchFor",
+    transitionKey: "notes.threatModel.transition",
   },
 
   // 3. Section 01 — Authentication & Authorization
   {
-    summary: "Section opener: who are you, and what may you do.",
-    talkingPoints: [
-      "These two are conflated by students all the time — drive the distinction now.",
-      "AuthN = identity. AuthZ = permission. The boundary is where IDOR lives.",
-      "We'll cover: passwords, JWTs, sessions, then ownership checks.",
-    ],
+    summaryKey: "notes.section1.summary",
+    talkingPointsKey: "notes.section1.talkingPoints",
   },
 
   // 4. Password hashing
   {
-    summary:
-      "Passwords are hashed with slow, salted, memory-hard functions. Argon2id is the default.",
-    talkingPoints: [
-      "Hash ≠ encrypt. Encryption is reversible; password storage must not be.",
-      "Why slow? GPU farms crack fast hashes (MD5/SHA-256) at billions/sec. Argon2 tuned to ~250ms forces a cost on attackers too.",
-      "Why salted? Without it, rainbow tables make any common password instant. Salt makes each hash unique.",
-      "Why memory-hard? GPUs have lots of cores but limited memory per core. Argon2's memory cost neutralizes the GPU advantage.",
-      "Show the bad → good code side by side. Point out that the good version embeds the salt and parameters in the hash string — you don't manage them separately.",
-    ],
-    details:
-      "Argon2id won the Password Hashing Competition (2015) and is the OWASP default. bcrypt is fine (cost ≥ 12) but has a 72-byte input cap. scrypt also acceptable. Re-hash on successful login if your cost parameters have changed — gives you a path to upgrade without forcing password resets.",
-    watchFor: [
-      "Common confusion: 'why not SHA-256 with salt?' — answer: speed. Even with salt, a GPU does 10B SHA-256/sec; Argon2 at ~10/sec/core makes brute force economically infeasible.",
-      "If asked about PBKDF2: acceptable but increasingly seen as dated; not memory-hard.",
-    ],
-    transition: "Once they're logged in, you hand them a token. Tokens get attacked.",
+    summaryKey: "notes.passwords.summary",
+    talkingPointsKey: "notes.passwords.talkingPoints",
+    detailsKey: "notes.passwords.details",
+    watchForKey: "notes.passwords.watchFor",
+    transitionKey: "notes.passwords.transition",
   },
 
   // 5. JWT attacks
   {
-    summary:
-      "JWT bugs are mostly verifier bugs — accepted algorithms, accepted secrets, missing claim checks.",
-    talkingPoints: [
-      "alg=none: historical bug, still appears in old jsonwebtoken versions and DIY verifiers. The library accepted unsigned tokens because the spec said it could.",
-      "alg confusion: switch RS256 → HS256 on a forged token. Server validates with the public key as the HMAC secret. Public key is public — instant forgery.",
-      "Weak secrets: HS256 with a short or guessable secret. hashcat with a wordlist cracks 'secret', 'changeme' in seconds. Use ≥32 random bytes.",
-      "Show the bad/good code. The good version pins the algorithm, checks issuer + audience + expiry. These are not optional.",
-    ],
-    details:
-      "Real CVEs to mention: CVE-2015-9235 (Auth0 jsonwebtoken alg=none), CVE-2022-23529 (jsonwebtoken RCE). PortSwigger has a great JWT lab if students want to practice. For long-lived sessions, prefer short-expiry access tokens (5–15 min) + refresh tokens stored in HttpOnly cookies — don't put long expiry on a JWT.",
-    watchFor: [
-      "Students will ask 'should I even use JWT?' — for stateless cross-service auth, yes; for browser sessions, server-side sessions with a cookie are usually simpler and safer.",
-      "Don't conflate JWT with OAuth or OIDC — JWT is just the token format.",
-    ],
-    transition:
-      "If you're not using JWTs, you're using session cookies — and those have their own footguns.",
+    summaryKey: "notes.jwt.summary",
+    talkingPointsKey: "notes.jwt.talkingPoints",
+    detailsKey: "notes.jwt.details",
+    watchForKey: "notes.jwt.watchFor",
+    transitionKey: "notes.jwt.transition",
   },
 
   // 6. Session security
   {
-    summary:
-      "Cookies need three flags, every time: HttpOnly, Secure, SameSite. And rotate on login.",
-    talkingPoints: [
-      "HttpOnly: JavaScript cannot read the cookie. Stops XSS from stealing the session.",
-      "Secure: only sent over HTTPS. Stops accidental cleartext leaks on mixed-content pages.",
-      "SameSite=Lax: prevents cross-site POSTs from sending the cookie. Defense against CSRF without needing a token in most cases.",
-      "Session fixation: if the session id doesn't change when the user authenticates, an attacker who planted a known id pre-login is now logged in too. `req.session.regenerate()` on login fixes this.",
-      "Path and Domain scoping: keep cookies as narrow as possible.",
-    ],
-    details:
-      "Why Lax and not Strict? Strict blocks the cookie even on top-level navigation from another site (clicking a link to your dashboard logs you out). Lax allows top-level GETs to send the cookie, which matches user expectations. SameSite=None requires Secure and is for true cross-site needs (embedded iframes).",
-    watchFor: [
-      "If students ask 'JWT vs session cookies?' — for first-party web apps, sessions are simpler; for APIs consumed by mobile or third-party clients, JWTs make sense.",
-      "Don't forget to invalidate the server-side session on logout — clearing the cookie isn't enough if a copy was captured.",
-    ],
-    transition:
-      "Auth tells you who. The next bug class is what they're allowed to do with that identity.",
+    summaryKey: "notes.sessions.summary",
+    talkingPointsKey: "notes.sessions.talkingPoints",
+    detailsKey: "notes.sessions.details",
+    watchForKey: "notes.sessions.watchFor",
+    transitionKey: "notes.sessions.transition",
   },
 
   // 7. RBAC / ABAC / IDOR
   {
-    summary:
-      "IDOR is the most common API bug: authenticated, but no ownership check on the resource.",
-    talkingPoints: [
-      "AuthN tells you who. AuthZ tells you whether they may. IDOR is the gap.",
-      "The example: GET /api/invoices/:id with no `ownerId` filter. Anyone logged in can read anyone's invoice by incrementing the id.",
-      "The fix is one line: add `ownerId: req.user.id` to the query. Return 404, not 403 — don't leak whether the resource exists.",
-      "RBAC: roles → permissions. Coarse but easy. Good for 'admins can delete'.",
-      "ABAC: attributes → policy. 'User can delete if (owner AND not archived AND within 7 days)'. Most real apps need ABAC eventually.",
-      "Default-deny: if there's no explicit allow, the answer is no.",
-    ],
-    details:
-      "IDOR has dominated the OWASP API Top 10 since it was created (API1:2023 Broken Object Level Authorization). The reason it's everywhere is that the bug is invisible to functional tests — your code works correctly for the owner. You need security tests that try to access other users' resources. Tools like Burp Repeater make this trivial. Modern frameworks (Casbin, Cedar, OPA) make policy externalization feasible.",
-    watchFor: [
-      "Students often think 'I check auth in middleware so I'm safe' — middleware checks identity, not resource ownership. The ownership check is per-route.",
-      "Don't return 403 with a body that says 'this resource exists but you can't see it' — that's the enumeration leak.",
-    ],
-    transition: "Identity sorted. Now the inputs.",
+    summaryKey: "notes.authz.summary",
+    talkingPointsKey: "notes.authz.talkingPoints",
+    detailsKey: "notes.authz.details",
+    watchForKey: "notes.authz.watchFor",
+    transitionKey: "notes.authz.transition",
   },
 
   // 8. Section 02 — Injection
   {
-    summary: "Section opener: untrusted input crossing a parser boundary.",
-    talkingPoints: [
-      "Every injection bug is the same shape: data the user controls being parsed as code.",
-      "SQL, NoSQL, OS commands, LDAP, XPath, template engines — all the same root cause.",
-      "Fix is also always the same: separate code from data at the parser layer (bind parameters, argv lists, etc).",
-    ],
+    summaryKey: "notes.section2.summary",
+    talkingPointsKey: "notes.section2.talkingPoints",
   },
 
   // 9. SQL injection
   {
-    summary:
-      "Concatenation is the bug. Parameterized queries are the fix. ORMs aren't a free pass.",
-    talkingPoints: [
-      "The classic ' OR '1'='1 — show how it short-circuits the WHERE clause.",
-      "Union-based SQLi reads data directly; blind/time-based extracts byte by byte using timing or boolean responses.",
-      "Parameterized queries send the query and parameters separately to the driver. The user input is never parsed as SQL.",
-      "ORMs help, but every ORM has a raw escape hatch (.raw(), $queryRaw, Sequelize.literal). The moment you concatenate into raw, you're back to square one.",
-    ],
-    details:
-      "Run an example: if you can, demo a SQLi against a vulnerable demo app like DVWA or Juice Shop. The 'aha' moment when students see `' OR 1=1 --` log them in as admin is worth more than five slides of explanation. Briefly mention sqlmap — automated exploitation tool, demonstrates how easy this is.",
-    watchFor: [
-      "Don't say 'escape user input' — that's a v0 approach. The right primitive is parameterization, which doesn't escape, it separates.",
-      "Mention: stored procedures help if they use parameters internally, but a stored proc that concatenates internally is still vulnerable.",
-    ],
-    transition: "SQL is solved. NoSQL has its own version of the same bug.",
+    summaryKey: "notes.sqli.summary",
+    talkingPointsKey: "notes.sqli.talkingPoints",
+    detailsKey: "notes.sqli.details",
+    watchForKey: "notes.sqli.watchFor",
+    transitionKey: "notes.sqli.transition",
   },
 
   // 10. NoSQL + command injection
   {
-    summary:
-      "Same bug, different parser. Mongo operator injection + shell=True are the headliners.",
-    talkingPoints: [
-      "Mongo operator injection: posting `{ \"$gt\": \"\" }` as the password matches every document. Many JS frameworks pass the body straight to the driver.",
-      "Fix: coerce to expected types (String(req.body.email)). Better: validate with zod/joi/yup and reject unexpected shapes.",
-      "Command injection: shell=True with user input. The example: a filename like 'a.png; rm -rf /' executes the rm.",
-      "Fix: pass argv as a list, never as a shell string. The shell isn't involved, so there's nothing to parse.",
-    ],
-    details:
-      "The Mongo bug was famously exploited against many login forms in 2020–2022. Mongoose now has `sanitize` middleware but it's opt-in. The shell=True bug is older than Unix itself — same primitive in PHP's shell_exec, Ruby's backticks, Node's exec vs execFile.",
-    watchFor: [
-      "Don't forget: shell metacharacters include `;`, `&`, `|`, `$`, backticks, redirects. Allowlists for filenames need to reject all of these.",
-      "Even argv-style spawn is dangerous if the *binary* takes user input as a flag (e.g., curl with -K reads a config file).",
-    ],
-    transition: "Sometimes the parser boundary is the filesystem itself.",
+    summaryKey: "notes.nosqlCmd.summary",
+    talkingPointsKey: "notes.nosqlCmd.talkingPoints",
+    detailsKey: "notes.nosqlCmd.details",
+    watchForKey: "notes.nosqlCmd.watchFor",
+    transitionKey: "notes.nosqlCmd.transition",
   },
 
   // 11. Path traversal & SSRF
   {
-    summary:
-      "Path: contain to a base dir, verify after resolve. SSRF: never fetch what the user gave you, blindly.",
-    talkingPoints: [
-      "Path traversal: ../../etc/passwd through path.join. Even path.join doesn't normalize away `..` if the base is relative.",
-      "Fix: resolve to absolute, then verify the resolved path startsWith the base directory. basename strips directory components from user input.",
-      "SSRF: the server fetches a URL the user controls. Attacker points it at internal services (admin endpoints, metadata service).",
-      "Cloud metadata: 169.254.169.254 on AWS — gives instance IAM credentials. Capital One 2019 breach was exactly this.",
-      "DNS rebinding: attacker controls a domain that resolves to a public IP first, then internal IP on the next query. Resolve DNS yourself and check the resolved IP, not the hostname.",
-    ],
-    details:
-      "Always block: 127.0.0.0/8, 10/8, 172.16/12, 192.168/16, 169.254/16, ::1. Some clouds have additional metadata IPs (GCP: 169.254.169.254, link-local). Use a library: Node's `ipaddr.js` or Python's `ipaddress` module. For URL fetching, consider a proxy service that does the IP check before forwarding.",
-    watchFor: [
-      "Capital One: ex-AWS engineer used SSRF on a misconfigured WAF to hit the EC2 metadata service. 100M records. ~$190M total cost. Mention this — it's the textbook SSRF case.",
-      "On AWS, enable IMDSv2 — requires session tokens and blocks the simplest SSRF reads.",
-    ],
-    transition: "We're done with injection. Now: secrets and data.",
+    summaryKey: "notes.pathSsrf.summary",
+    talkingPointsKey: "notes.pathSsrf.talkingPoints",
+    detailsKey: "notes.pathSsrf.details",
+    watchForKey: "notes.pathSsrf.watchFor",
+    transitionKey: "notes.pathSsrf.transition",
   },
 
   // 12. Section 03 — Data Protection & Secrets
   {
-    summary: "Section opener: what you store and where the keys live.",
-    talkingPoints: [
-      "Two halves: secrets management (your keys) and data protection (user data).",
-      "Theme: assume the database will leak. Make the leak useless.",
-    ],
+    summaryKey: "notes.section3.summary",
+    talkingPointsKey: "notes.section3.talkingPoints",
   },
 
   // 13. Secrets management
   {
-    summary:
-      "Secrets in git = compromised forever. .env is barely better. Vault/KMS with rotation is the answer.",
-    talkingPoints: [
-      "Hardcoded secrets: GitHub search indexes these in minutes. There are bots that watch new commits in real time.",
-      ".env: out of source, plaintext on every dev laptop, often committed by accident. Improvement, not solution.",
-      "Vault/KMS: short-lived, rotated, audited. Apps fetch at boot or on-demand. Each identity (service, person) gets per-secret access.",
-      "Rotation matters: even if a secret leaks, if it's rotated weekly, the blast radius is bounded.",
-      "git-secrets and pre-commit hooks block accidental commits. GitHub has push protection for known patterns — turn it on.",
-    ],
-    details:
-      "Uber 2016 breach: AWS keys in a GitHub repo. ~57M users affected, ~$148M settlement. The keys had been in the repo for months. Modern tools: HashiCorp Vault, AWS Secrets Manager, GCP Secret Manager, doppler, 1Password Secrets Automation. For CI/CD: GitHub OIDC + assume-role is the modern pattern — no long-lived secrets needed.",
-    watchFor: [
-      "If a secret has ever been in a repo (even a deleted commit), assume compromised. Rotate immediately — don't bother removing the commit first.",
-      "Encrypted .env files (sops, dotenv-vault) are an OK middle ground for small teams.",
-    ],
-    transition:
-      "Secrets are about access. Encryption is about what happens after access.",
+    summaryKey: "notes.secrets.summary",
+    talkingPointsKey: "notes.secrets.talkingPoints",
+    detailsKey: "notes.secrets.details",
+    watchForKey: "notes.secrets.watchFor",
+    transitionKey: "notes.secrets.transition",
   },
 
   // 14. Encryption
   {
-    summary:
-      "Encrypt sensitive fields with keys held outside the database. TLS 1.2+ everywhere, HSTS preload.",
-    talkingPoints: [
-      "At rest: column-level encryption for sensitive fields (SSN, PII). If the DB leaks, the encrypted columns are useless without the key.",
-      "Key lives in KMS, not in the same database. Application fetches the data key, decrypts in memory.",
-      "Fernet (Python) is a good default — AES-128-CBC + HMAC, key rotation built in.",
-      "In transit: TLS 1.2 minimum (TLS 1.3 preferred). Disable SSLv3, TLS 1.0, TLS 1.1.",
-      "HSTS with preload: tells browsers to never connect over HTTP again. Submit your domain to hstspreload.org.",
-    ],
-    details:
-      "Equifax 2017: ~147M records. Apache Struts CVE, but the underlying issue was that PII was stored unencrypted. Their stock dropped 31% in a week. For TLS configuration, Mozilla SSL Config Generator (ssl-config.mozilla.org) gives you the right snippet for any web server. Field-level encryption requires planning queries differently — you can't WHERE on an encrypted column. Tokenization (replacing PII with reference tokens) is sometimes a better fit.",
-    watchFor: [
-      "Don't roll your own crypto. AES-ECB is not encryption. AES-CBC without HMAC is malleable. Use authenticated modes (GCM, ChaCha20-Poly1305) or libraries that do this for you.",
-      "Encryption doesn't replace access control — it adds a second layer.",
-    ],
-    transition:
-      "We've covered identity, inputs, and data. Now the infrastructure around it.",
+    summaryKey: "notes.encryption.summary",
+    talkingPointsKey: "notes.encryption.talkingPoints",
+    detailsKey: "notes.encryption.details",
+    watchForKey: "notes.encryption.watchFor",
+    transitionKey: "notes.encryption.transition",
   },
 
   // 15. Section 04 — Infrastructure & API Security
   {
-    summary: "Section opener: the perimeter. Rate limits, headers, and dependencies.",
-    talkingPoints: [
-      "Most of this is configuration, not code. But misconfiguration is the #1 cloud security issue.",
-      "We'll cover rate limiting + timing, CORS + headers, and the supply chain.",
-    ],
+    summaryKey: "notes.section4.summary",
+    talkingPointsKey: "notes.section4.talkingPoints",
   },
 
   // 16. Rate limiting + timing attacks
   {
-    summary:
-      "Limit by user not just IP. Stricter on auth. Constant-time compares for secrets.",
-    talkingPoints: [
-      "Without rate limiting, brute force on /login is unlimited. Even with strong hashing, common passwords fall.",
-      "Per-IP isn't enough — attackers rotate IPs. Key by email/username + IP. Use a distributed store (Redis) behind a load balancer or limits won't be shared.",
-      "Lower limits for sensitive routes: /login, /signup, /password-reset, /api/admin/* should be much tighter than /api/feed.",
-      "Timing attacks: `==` short-circuits at the first mismatch. The longer it takes to fail, the more prefix characters were correct. Attacker recovers a secret byte by byte.",
-      "Fix: timingSafeEqual (Node), hmac.compare_digest (Python), constant-time equals in every language's crypto lib.",
-    ],
-    details:
-      "Timing attacks across the network are noisy but feasible — Crosby & Wallach (2009) demonstrated ~25 microsecond resolution over the internet. Real exploits have been done on session tokens and password reset tokens. For login throttling, also consider account lockout (with reset via email) and CAPTCHA on suspicious patterns.",
-    watchFor: [
-      "Even when you use constant-time compare, leaks can happen elsewhere — e.g., comparing string lengths first leaks the secret length. Pad to a fixed length or compare lengths in constant time too.",
-      "Don't rate-limit the user out of their own account on a typo. Exponential backoff, not hard lockout.",
-    ],
-    transition: "Rate limits handle the brute force. Headers handle the browser.",
+    summaryKey: "notes.rateLimits.summary",
+    talkingPointsKey: "notes.rateLimits.talkingPoints",
+    detailsKey: "notes.rateLimits.details",
+    watchForKey: "notes.rateLimits.watchFor",
+    transitionKey: "notes.rateLimits.transition",
   },
 
   // 17. CORS & headers
   {
-    summary:
-      "Allowlist CORS origins. helmet for the rest. Then tighten CSP per route.",
-    talkingPoints: [
-      "Wildcard origin (`*`) with credentials is blocked by browsers — but the *intent* is wrong. Means the developer didn't think about who needs access.",
-      "Reflecting the Origin header is even worse — defeats the entire purpose of CORS.",
-      "Right answer: explicit allowlist of origins.",
-      "helmet sets safe defaults: HSTS, X-Frame-Options (clickjacking), X-Content-Type-Options (MIME sniffing), Referrer-Policy.",
-      "CSP is the big one — controls what scripts can load. helmet's default is conservative; tighten it once you know what your app needs.",
-    ],
-    details:
-      "CORS controls cross-origin reads in the browser. It doesn't prevent attacks server-side — a malicious actor with a tool can hit your API regardless. CSP nonces or hashes are the modern pattern for inline scripts. Report-Only mode (`Content-Security-Policy-Report-Only`) lets you roll out CSP without breaking the app — you get violation reports without blocking.",
-    watchFor: [
-      "Students conflate CORS with CSRF — CORS protects reads across origins; CSRF protects state-changing requests. Different problems.",
-      "Don't disable CORS to fix a bug — that's the equivalent of disabling auth. Add the origin to the allowlist.",
-    ],
-    transition: "Your code is small. Your dependencies are huge. That's the supply chain.",
+    summaryKey: "notes.cors.summary",
+    talkingPointsKey: "notes.cors.talkingPoints",
+    detailsKey: "notes.cors.details",
+    watchForKey: "notes.cors.watchFor",
+    transitionKey: "notes.cors.transition",
   },
 
   // 18. Dependency CVEs
   {
-    summary:
-      "Most production CVEs are in transitive deps. Audit in CI, fail on high+, pin and review.",
-    talkingPoints: [
-      "Modern app: ~50 direct deps, ~1500 transitive. Each one is code running in your process with full access.",
-      "Most CVEs are in transitive deps no one read. log4shell, event-stream, ua-parser-js — all famous transitive supply chain incidents.",
-      "Audit in CI: pnpm/npm audit, pip-audit, cargo audit, govulncheck. Fail builds on high/critical.",
-      "Trivy / Snyk / GitHub Dependabot scan beyond your manifest — container images, OS packages.",
-      "Pin versions and commit the lockfile. Don't auto-update production — use Renovate/Dependabot for controlled PRs.",
-      "Treat new direct deps like new employees: review them, understand who maintains them.",
-    ],
-    details:
-      "event-stream (2018): popular npm package, ~2M weekly downloads. Maintainer handed off to a stranger, who injected wallet-stealing malware into a transitive dep used by Copay. Lesson: maintainer transitions are a supply chain risk. log4shell (2021): RCE in log4j2, present in essentially every Java app. Cost billions globally. SBOM (Software Bill of Materials) is increasingly required for government contracts.",
-    watchFor: [
-      "Don't just upgrade blindly when a CVE is reported — read the advisory. Sometimes the vulnerable code path isn't reachable from your app.",
-      "Mirror critical deps in your own registry. If a maintainer rage-quits and pulls a package (left-pad 2016), you need a fallback.",
-    ],
-    transition: "Last section — bugs that don't fit a clean category but matter.",
+    summaryKey: "notes.supplyChain.summary",
+    talkingPointsKey: "notes.supplyChain.talkingPoints",
+    detailsKey: "notes.supplyChain.details",
+    watchForKey: "notes.supplyChain.watchFor",
+    transitionKey: "notes.supplyChain.transition",
   },
 
   // 19. Section 05 — Advanced Topics
   {
-    summary: "Section opener: the bugs that take down billion-dollar companies.",
-    talkingPoints: [
-      "These are the ones that get coverage in The Verge.",
-      "Mass assignment, deserialization, and observability — three categories that hit even mature teams.",
-    ],
+    summaryKey: "notes.section5.summary",
+    talkingPointsKey: "notes.section5.talkingPoints",
   },
 
   // 20. Mass assignment
   {
-    summary:
-      "Auto-binding the request body to a model is convenient and catastrophic. Allowlist explicitly.",
-    talkingPoints: [
-      "The famous example: Egor Homakov, March 2012, added himself as a contributor to the Rails repo by posting `public_key[user_id]=4`.",
-      "Rails (and most frameworks at the time) auto-bound every parameter in the request to the model. isAdmin, ownerId, anything.",
-      "Modern fix: explicit allowlist of fields per endpoint. Zod's `.strict()` rejects unknown keys.",
-      "This is one of those bugs where the framework helped you ship faster and now you can't tell which fields are dangerous.",
-    ],
-    details:
-      "Homakov was banned for the disclosure (briefly), then hired. Rails introduced `strong_parameters` as a direct response, made it the default in Rails 4. Same bug class appears constantly in JS (Mongoose, Sequelize), Django (ModelForm without `fields = [...]`), Java (Jackson auto-deserialization). Look for places where `req.body` is passed wholesale to an ORM call.",
-    watchFor: [
-      "Students will ask 'isn't this just SQL/NoSQL injection?' — no, the input is structurally valid, just contains fields the user shouldn't be allowed to set.",
-      "Sensitive fields: isAdmin, role, ownerId, createdAt, balance, anything that determines access or money.",
-    ],
-    transition:
-      "Mass assignment is about which fields. Deserialization is about which classes.",
+    summaryKey: "notes.massAssignment.summary",
+    talkingPointsKey: "notes.massAssignment.talkingPoints",
+    detailsKey: "notes.massAssignment.details",
+    watchForKey: "notes.massAssignment.watchFor",
+    transitionKey: "notes.massAssignment.transition",
   },
 
   // 21. Deserialization
   {
-    summary:
-      "Any format that can rebuild arbitrary objects is RCE. Sign + JSON only.",
-    talkingPoints: [
-      "Python's pickle, Java's ObjectInputStream, PHP's unserialize, Ruby's Marshal — all can instantiate arbitrary classes with arbitrary constructor args.",
-      "Pickle: `__reduce__` is the magic method. Returns a callable + args to invoke. Attacker can craft a payload that runs `os.system(...)`. Pure RCE.",
-      "If you must serialize state to a client (cookie, hidden field), use JSON + HMAC signature. Verify the signature before deserializing.",
-      "yaml.load (without safe_load) is the same bug. yaml.safe_load is fine.",
-      "For internal RPC, JSON-RPC or Protocol Buffers — no class instantiation, just data.",
-    ],
-    details:
-      "Equifax (2017) was an Apache Struts deserialization bug — CVE-2017-5638. Java's been the worst hit historically (ysoserial is a tool that generates payloads against common classpaths). For Python, `pickle` should never see attacker input; if you need binary serialization, msgpack with a schema is a better choice.",
-    watchFor: [
-      "Even 'safe' formats can be unsafe with arbitrary tags — XML XXE, YAML custom tags. Always use the schema-restricted variant.",
-      "Signing alone doesn't fix the bug if the attacker can leak your signing key. Defense in depth: use safe formats AND sign them.",
-    ],
-    transition: "Last category: what you log, and what you don't.",
+    summaryKey: "notes.deserialization.summary",
+    talkingPointsKey: "notes.deserialization.talkingPoints",
+    detailsKey: "notes.deserialization.details",
+    watchForKey: "notes.deserialization.watchFor",
+    transitionKey: "notes.deserialization.transition",
   },
 
   // 22. Logging & errors
   {
-    summary:
-      "Log enough to investigate. Never log secrets. Never leak stack traces to clients.",
-    talkingPoints: [
-      "Do log: request id (for correlation), user id, route, status, latency, auth events, authz denials, admin actions.",
-      "Never log: passwords (even hashed), tokens, session ids, API keys, full PII, request bodies for sensitive routes.",
-      "Common bug: error handler prints err.stack to the response body. Leaks file paths, DB queries, env vars in error messages.",
-      "Right pattern: generate a requestId, log the error server-side with full context, return a generic message + the requestId to the client.",
-      "Users can quote the requestId in support tickets; you can look it up in logs. No leakage.",
-    ],
-    details:
-      "GitHub had a famous incident where they logged plaintext passwords for several months due to an internal logging change (2018). T-Mobile, Twitter, and others have had similar. Build redaction into your logger config — pino has `redact`, structlog has processors, slog (Go) has handlers. PCI-DSS, HIPAA, GDPR all have specific requirements on what can/can't be logged.",
-    watchFor: [
-      "404 vs 403 — don't leak resource existence in error messages (callback to the IDOR slide).",
-      "Don't email errors to admins without redacting — that's leaking through a different channel.",
-    ],
-    transition:
-      "We've covered a lot. Let's compress it into ten lines you can act on tomorrow.",
+    summaryKey: "notes.logging.summary",
+    talkingPointsKey: "notes.logging.talkingPoints",
+    detailsKey: "notes.logging.details",
+    watchForKey: "notes.logging.watchFor",
+    transitionKey: "notes.logging.transition",
   },
 
   // 23. Close
   {
-    summary:
-      "Ten non-negotiables. The deck is the lecture; this slide is the checklist.",
-    talkingPoints: [
-      "Walk through the 10 quickly — each one is a slide we already covered.",
-      "Frame them as 'if you do nothing else, do these'.",
-      "Encourage students to bookmark OWASP Top 10 and Cheat Sheets — those are living documents.",
-      "PortSwigger Web Security Academy is free and excellent for hands-on practice.",
-      "Final pitch: security is a craft. The hard part is doing it consistently under deadline pressure.",
-      "Q&A — open the floor.",
-    ],
-    watchFor: [
-      "Don't run over — leave at least 10 minutes for Q&A. The audience will have questions.",
-      "If asked 'where do I start?' — answer: OWASP ASVS Level 1 checklist. Audit your own app against it this week.",
-    ],
+    summaryKey: "notes.close.summary",
+    talkingPointsKey: "notes.close.talkingPoints",
+    watchForKey: "notes.close.watchFor",
   },
 ];
