@@ -206,7 +206,7 @@ export function SqlInjectionDemo() {
           {mode === "good" && isInjection ? (
             <p className="rounded-md border border-(--color-accent-green)/30 bg-(--color-accent-green-soft) px-3 py-2 text-xs text-(--color-accent-green)">
               ✓ Input is bound as a value. The injection text is just a string
-              that doesn't match any email.
+              that doesn&apos;t match any email.
             </p>
           ) : null}
         </div>

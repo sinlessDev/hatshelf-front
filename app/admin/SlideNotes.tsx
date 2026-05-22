@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -25,52 +25,54 @@ function clamp(n: number, max: number) {
   return Math.max(0, Math.min(n, max));
 }
 
+function subscribeDeck(cb: () => void) {
+  const ch = new BroadcastChannel("hatshelf-deck");
+  ch.onmessage = (e) => {
+    if (e.data?.type === "slide" && typeof e.data.index === "number") {
+      try {
+        localStorage.setItem("hatshelf:slide", String(e.data.index));
+      } catch {
+        /* ignore */
+      }
+      cb();
+    }
+  };
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === "hatshelf:slide") cb();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    ch.close();
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function readDeckIndex(): number | null {
+  try {
+    const raw = localStorage.getItem("hatshelf:slide");
+    if (raw === null) return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
 export function SlideNotes() {
   const max = slides.length - 1;
-  const [deckIndex, setDeckIndex] = useState<number | null>(null);
-  const [viewIndex, setViewIndex] = useState(0);
-  const [following, setFollowing] = useState(true);
+  const rawDeckIndex = useSyncExternalStore(
+    subscribeDeck,
+    readDeckIndex,
+    () => null,
+  );
+  const deckIndex = rawDeckIndex === null ? null : clamp(rawDeckIndex, max);
+  // `browsed` decouples viewIndex when the user navigates manually. While
+  // null, the panel follows the deck (viewIndex === deckIndex).
+  const [browsed, setBrowsed] = useState<number | null>(null);
+  const viewIndex = browsed ?? deckIndex ?? 0;
 
-  // Restore last-known deck slide on mount
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("hatshelf:slide");
-      if (raw !== null) {
-        const n = clamp(parseInt(raw, 10) || 0, max);
-        setDeckIndex(n);
-        setViewIndex(n);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [max]);
-
-  // Subscribe to deck broadcasts
-  useEffect(() => {
-    const ch = new BroadcastChannel("hatshelf-deck");
-    ch.onmessage = (e) => {
-      if (e.data?.type === "slide" && typeof e.data.index === "number") {
-        const n = clamp(e.data.index, max);
-        setDeckIndex(n);
-        setFollowing((f) => {
-          if (f) setViewIndex(n);
-          return f;
-        });
-      }
-    };
-    return () => ch.close();
-  }, [max]);
-
-  const goTo = (next: number) => {
-    setViewIndex(clamp(next, max));
-    setFollowing(false);
-  };
-
-  const resync = () => {
-    if (deckIndex === null) return;
-    setViewIndex(deckIndex);
-    setFollowing(true);
-  };
+  const goTo = (next: number) => setBrowsed(clamp(next, max));
+  const resync = () => setBrowsed(null);
 
   const slide = slides[viewIndex];
   const { title, kind } = slideHeading(slide);

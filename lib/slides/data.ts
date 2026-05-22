@@ -147,6 +147,7 @@ def verify(pw: str, stored: str) -> bool:
       },
       {
         kind: "code-compare",
+        demoId: "jwt",
         bad: {
           label: "❌ VULNERABLE",
           tone: "bad",
@@ -242,6 +243,7 @@ await req.session.regenerate();`,
       },
       {
         kind: "code-compare",
+        demoId: "idor",
         bad: {
           label: "❌ IDOR",
           tone: "bad",
@@ -599,6 +601,7 @@ app.use("/api/login", rateLimit({
       },
       {
         kind: "code-compare",
+        demoId: "timing",
         bad: {
           label: "❌ TIMING LEAK",
           tone: "bad",
@@ -752,6 +755,7 @@ jobs:
       },
       {
         kind: "code-compare",
+        demoId: "mass-assignment",
         bad: {
           label: "❌ AUTO-BIND EVERYTHING",
           tone: "bad",
