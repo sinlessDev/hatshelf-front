@@ -60,7 +60,6 @@ export type ContentSlide = {
   accent: Accent;
   icon?: string;
   title: string;
-  timeBadge?: string;
   blocks: Block[];
 };
 

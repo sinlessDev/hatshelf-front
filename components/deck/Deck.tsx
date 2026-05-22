@@ -7,6 +7,7 @@ import { accentVar } from "@/lib/slides/accent";
 import { TitleSlide } from "./slides/TitleSlide";
 import { DividerSlide } from "./slides/DividerSlide";
 import { ContentSlide } from "./slides/ContentSlide";
+import { AskButton } from "./AskButton";
 
 function parseHash(): number {
   if (typeof window === "undefined") return 0;
@@ -134,6 +135,8 @@ export function Deck({ slides }: { slides: PreparedSlide[] }) {
           )}
         </motion.div>
       </AnimatePresence>
+
+      <AskButton />
 
       {/* Bottom nav */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10">

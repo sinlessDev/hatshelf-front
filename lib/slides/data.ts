@@ -16,7 +16,6 @@ export const slides: Slide[] = [
     accent: "neutral",
     icon: "!",
     title: "What we're defending against",
-    timeBadge: "3 min",
     blocks: [
       {
         kind: "lead",
@@ -70,7 +69,6 @@ export const slides: Slide[] = [
     accent: "blue",
     icon: "#",
     title: "Storing passwords",
-    timeBadge: "4 min",
     blocks: [
       {
         kind: "lead",
@@ -125,7 +123,6 @@ def verify(pw: str, stored: str) -> bool:
     accent: "blue",
     icon: "{}",
     title: "JWT: three common forgeries",
-    timeBadge: "5 min",
     blocks: [
       {
         kind: "cards",
@@ -192,7 +189,6 @@ export function verify(token) {
     accent: "blue",
     icon: "S",
     title: "Session cookies",
-    timeBadge: "4 min",
     blocks: [
       {
         kind: "code-compare",
@@ -239,7 +235,6 @@ await req.session.regenerate();`,
     accent: "blue",
     icon: "%",
     title: "Authorization: ownership matters",
-    timeBadge: "5 min",
     blocks: [
       {
         kind: "lead",
@@ -297,7 +292,6 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
     accent: "red",
     icon: ">_",
     title: "SQL injection — still #1",
-    timeBadge: "5 min",
     blocks: [
       {
         kind: "lead",
@@ -348,7 +342,6 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
     accent: "red",
     icon: "$",
     title: "NoSQL & command injection",
-    timeBadge: "5 min",
     blocks: [
       {
         kind: "code-compare",
@@ -414,7 +407,6 @@ subprocess.run(
     accent: "red",
     icon: "/",
     title: "Path traversal & SSRF",
-    timeBadge: "5 min",
     blocks: [
       {
         kind: "code-compare",
@@ -466,7 +458,6 @@ app.get("/files", (req, res) => {
     accent: "green",
     icon: "K",
     title: "Where secrets live",
-    timeBadge: "4 min",
     blocks: [
       {
         kind: "cards",
@@ -523,7 +514,6 @@ STRIPE_KEY = load_secret(f"{os.environ['ENV']}/stripe/key")
     accent: "green",
     icon: "E",
     title: "Encryption at rest & in transit",
-    timeBadge: "5 min",
     blocks: [
       {
         kind: "code-compare",
@@ -586,7 +576,6 @@ def get_ssn(user) -> str:
     accent: "purple",
     icon: "~",
     title: "Rate limits & timing attacks",
-    timeBadge: "5 min",
     blocks: [
       {
         kind: "code",
@@ -641,7 +630,6 @@ return next();`,
     accent: "purple",
     icon: "H",
     title: "CORS & security headers",
-    timeBadge: "4 min",
     blocks: [
       {
         kind: "code-compare",
@@ -687,7 +675,6 @@ app.use(cors({
     accent: "purple",
     icon: "P",
     title: "Your supply chain is in your lockfile",
-    timeBadge: "4 min",
     blocks: [
       {
         kind: "lead",
@@ -757,7 +744,6 @@ jobs:
     accent: "amber",
     icon: "M",
     title: "Mass assignment",
-    timeBadge: "4 min",
     blocks: [
       {
         kind: "lead",
@@ -802,7 +788,6 @@ app.patch("/users/me", auth, async (req, res) => {
     accent: "amber",
     icon: "D",
     title: "Insecure deserialization",
-    timeBadge: "5 min",
     blocks: [
       {
         kind: "lead",
@@ -848,7 +833,6 @@ def verify(token: str) -> dict:
     accent: "amber",
     icon: "L",
     title: "Observability without leaks",
-    timeBadge: "4 min",
     blocks: [
       {
         kind: "cards",
@@ -911,7 +895,6 @@ def verify(token: str) -> dict:
     accent: "neutral",
     icon: "✓",
     title: "10 non-negotiables",
-    timeBadge: "close",
     blocks: [
       {
         kind: "bullets",

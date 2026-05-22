@@ -51,11 +51,6 @@ export function ContentSlide({ slide }: { slide: PreparedContentSlide }) {
         <h2 className="flex-1 text-3xl font-semibold tracking-tight text-[--color-deck-text]">
           {slide.title}
         </h2>
-        {slide.timeBadge ? (
-          <span className="rounded-full border border-[--color-deck-border] bg-[--color-deck-card] px-3 py-1 font-mono text-xs text-[--color-deck-text-muted]">
-            {slide.timeBadge}
-          </span>
-        ) : null}
       </header>
       <div
         className={`flex min-h-0 flex-1 flex-col gap-4 ${codeHeavy ? "" : "justify-start"}`}
