@@ -11,11 +11,12 @@ async function prepareBlock(b: Block): Promise<PreparedBlock> {
       kind: "code-compare",
       bad: { ...b.bad, html: badHtml },
       good: { ...b.good, html: goodHtml },
+      demoId: b.demoId,
     };
   }
   if (b.kind === "code") {
     const html = await highlight(b.block.code, b.block.lang);
-    return { kind: "code", block: { ...b.block, html } };
+    return { kind: "code", block: { ...b.block, html }, demoId: b.demoId };
   }
   return b;
 }

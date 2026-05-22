@@ -21,8 +21,8 @@ export type CodeBlock = {
 };
 
 export type Block =
-  | { kind: "code-compare"; bad: CodeBlock; good: CodeBlock }
-  | { kind: "code"; block: CodeBlock }
+  | { kind: "code-compare"; bad: CodeBlock; good: CodeBlock; demoId?: string }
+  | { kind: "code"; block: CodeBlock; demoId?: string }
   | { kind: "card"; accent?: Accent; title: string; body?: string; bullets?: string[] }
   | {
       kind: "cards";
@@ -68,8 +68,13 @@ export type Slide = TitleSlide | DividerSlide | ContentSlide;
 export type HighlightedCode = { html: string };
 
 export type PreparedBlock =
-  | { kind: "code-compare"; bad: CodeBlock & HighlightedCode; good: CodeBlock & HighlightedCode }
-  | { kind: "code"; block: CodeBlock & HighlightedCode }
+  | {
+      kind: "code-compare";
+      bad: CodeBlock & HighlightedCode;
+      good: CodeBlock & HighlightedCode;
+      demoId?: string;
+    }
+  | { kind: "code"; block: CodeBlock & HighlightedCode; demoId?: string }
   | Extract<
       Block,
       | { kind: "card" }

@@ -299,6 +299,7 @@ app.get("/api/invoices/:id", auth, async (req, res) => {
       },
       {
         kind: "code-compare",
+        demoId: "sqli",
         bad: {
           label: "❌ VULNERABLE",
           tone: "bad",

@@ -3,6 +3,7 @@ import { CodeBlock } from "../blocks/CodeBlock";
 import { CodeCompare } from "../blocks/CodeCompare";
 import { InfoCard, Cards } from "../blocks/InfoCard";
 import { Warning, Tip, Bullets, Lead } from "../blocks/Callouts";
+import { TryItButton } from "../demos/TryItButton";
 import { accentVar } from "@/lib/slides/accent";
 import type { PreparedContentSlide, PreparedBlock } from "@/lib/slides/types";
 
@@ -31,8 +32,18 @@ function hasCodeBlock(blocks: PreparedBlock[]) {
   return blocks.some((b) => b.kind === "code-compare" || b.kind === "code");
 }
 
+function findDemoId(blocks: PreparedBlock[]): string | undefined {
+  for (const b of blocks) {
+    if ((b.kind === "code-compare" || b.kind === "code") && b.demoId) {
+      return b.demoId;
+    }
+  }
+  return undefined;
+}
+
 export function ContentSlide({ slide }: { slide: PreparedContentSlide }) {
   const codeHeavy = hasCodeBlock(slide.blocks);
+  const demoId = findDemoId(slide.blocks);
   return (
     <SlideFrame accent={slide.accent}>
       <header className="mb-6 flex items-center gap-4">
@@ -51,6 +62,7 @@ export function ContentSlide({ slide }: { slide: PreparedContentSlide }) {
         <h2 className="flex-1 text-3xl font-semibold tracking-tight text-[--color-deck-text]">
           {slide.title}
         </h2>
+        {demoId ? <TryItButton demoId={demoId} /> : null}
       </header>
       <div
         className={`flex min-h-0 flex-1 flex-col gap-4 ${codeHeavy ? "" : "justify-start"}`}
